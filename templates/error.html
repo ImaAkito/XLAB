@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Ошибка | IT-вакансии Аналитика{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-exclamation-triangle text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h1 class="display-4 mb-4">{{ error }}</h1>
+                    
+                    <p class="lead mb-4">{{ message }}</p>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('api.index') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-home me-2"></i> Вернуться на главную
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            {% if error_details %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Технические детали</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="text-muted">{{ error_details }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

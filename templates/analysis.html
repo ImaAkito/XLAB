@@ -1,0 +1,758 @@
+{% extends 'base.html' %}
+
+{% block title %}Результаты анализа IT-вакансий{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analysis-heading {
+        padding-bottom: 10px;
+        border-bottom: 2px solid #eee;
+        margin-bottom: 20px;
+        font-weight: 700;
+        color: #4e73df;
+        font-size: 1.5rem;
+    }
+    
+    .stats-card {
+        text-align: center;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-value {
+        font-size: 28px;
+        font-weight: bold;
+    }
+    
+    .stats-label {
+        font-size: 14px;
+        color: #777;
+    }
+    
+    .chart-container {
+        padding: 15px;
+        margin-bottom: 25px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .map-container {
+        height: 500px;
+        width: 100%;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .wordcloud-container {
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .wordcloud-img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .summary-card {
+        background: #f9fafb;
+        border-left: 5px solid #4e73df;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .export-btn {
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .filter-tag {
+        display: inline-block;
+        padding: 3px 8px;
+        margin: 3px;
+        background-color: #eee;
+        border-radius: 30px;
+        font-size: 12px;
+    }
+    
+    .animated-counter {
+        animation: countUp 2s ease-out;
+    }
+    
+    @keyframes countUp {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    /* Стили для списка вакансий */
+    .vacancy-list {
+        max-height: 800px;
+        overflow-y: auto;
+    }
+    
+    .vacancy-item {
+        background-color: #fff;
+        border: 1px solid #eaeaea;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .vacancy-item:hover {
+        border-color: #d0d0d0;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.09);
+        transform: translateY(-2px);
+    }
+    
+    .vacancy-logo-container {
+        width: 64px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .vacancy-logo {
+        max-width: 64px;
+        max-height: 64px;
+        object-fit: contain;
+    }
+    
+    .vacancy-title {
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    .vacancy-link {
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    .vacancy-link:hover {
+        color: inherit;
+        text-decoration: underline;
+    }
+    
+    .vacancy-company {
+        font-size: 0.95rem;
+        color: #555;
+    }
+    
+    .vacancy-info {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    
+    .vacancy-salary {
+        font-weight: 600;
+        color: #28a745;
+        font-size: 1.05rem;
+        white-space: nowrap;
+    }
+    
+    @media (max-width: 768px) {
+        .vacancy-item {
+            padding: 10px !important;
+        }
+        
+        .vacancy-salary {
+            margin-top: 10px;
+            text-align: left;
+        }
+    }
+    
+    /* Стили для панели выбора вакансий */
+    .vacancy-selection-panel {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .vacancy-checkboxes {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 10px 5px;
+    }
+    
+    /* Стили для чекбоксов с галочками */
+    .custom-checkbox .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        cursor: pointer;
+        border-radius: 4px;
+        border: 2px solid #4e73df;
+        background-color: white;
+        transition: all 0.2s ease;
+    }
+    
+    .custom-checkbox .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23fff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26 2.974 7.25 8 2.193z'/%3e%3c/svg%3e");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: 0.7em;
+    }
+    
+    .custom-checkbox .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .custom-checkbox .form-check-input:hover {
+        border-color: #2e59d9;
+    }
+    
+    .custom-checkbox .form-check-label {
+        cursor: pointer;
+        user-select: none;
+        padding-left: 0.3rem;
+        font-weight: 400;
+        font-size: 0.9rem;
+        color: #444;
+        transition: color 0.2s ease;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .custom-checkbox .form-check-label:hover {
+        color: #4e73df;
+    }
+    
+    .form-check.custom-checkbox {
+        margin-bottom: 0.4rem;
+        padding-left: 1.6rem;
+    }
+    
+    /* Вакансии */
+    .vacancy-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
+    }
+    
+    .salary-badge {
+        font-size: 0.75rem;
+        font-weight: normal;
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 30px;
+    }
+    
+    /* Стиль для панели выбора вакансий */
+    #vacancy-selection-panel {
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e5e5e5;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+    }
+    
+    #vacancy-selection-panel .panel-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    #vacancy-selection-panel .btn-toolbar {
+        display: flex;
+        gap: 10px;
+    }
+    
+    #vacancy-selection-panel .vacancies-container {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: white;
+        border-radius: 5px;
+        border: 1px solid #eaeaea;
+    }
+    
+    /* Полностью новые стили для чекбоксов */
+    .simple-checkbox {
+        position: relative;
+        padding-left: 28px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        user-select: none;
+    }
+    
+    .simple-checkbox input {
+        position: absolute;
+        opacity: 0;
+        height: 0;
+        width: 0;
+    }
+    
+    .simple-checkbox label {
+        cursor: pointer;
+        color: #444;
+        font-weight: 400;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .simple-checkbox label:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 1px;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #4e73df;
+        background-color: #fff;
+        border-radius: 3px;
+    }
+    
+    .simple-checkbox input:checked + label:before {
+        background-color: #4e73df;
+    }
+    
+    .simple-checkbox input:checked + label:after {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 3px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    .simple-checkbox input:hover + label:before {
+        border-color: #2e59d9;
+    }
+    
+    .simple-checkbox label:hover {
+        color: #4e73df;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if data is not none and data|length == 0 %}
+    <div class="empty-state fadeIn">
+        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png" alt="Нет данных">
+        <h4 class="mt-4 mb-2">Нет данных</h4>
+        <p class="text-muted">По заданным критериям не найдено ни одной вакансии.<br>Попробуйте изменить параметры фильтрации.</p>
+        <a href="{{ url_for('api.index') }}" class="btn mt-3"><i class="fas fa-arrow-left me-2"></i>Вернуться к поиску</a>
+    </div>
+{% else %}
+    <div class="row mb-4 fadeIn">
+        <div class="col">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="analysis-heading mb-0">
+                            Анализ IT-вакансий
+                        </h2>
+                        <a href="{{ url_for('api.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Новый поиск
+                        </a>
+                    </div>
+                    <div class="summary-card">
+                        <h5><i class="fas fa-filter me-2"></i> Применённые фильтры:</h5>
+                        <div class="mt-2">
+                            {% if filters.text %}
+                                <span class="filter-tag"><i class="fas fa-search me-1"></i> Запрос: {{ filters.text }}</span>
+                            {% endif %}
+                            {% if filters.region %}
+                                <span class="filter-tag"><i class="fas fa-map-marker-alt me-1"></i> Регион: {{ filters.region }}</span>
+                            {% endif %}
+                            {% if filters.salary_from or filters.salary_to %}
+                                <span class="filter-tag">
+                                    <i class="fas fa-money-bill-alt me-1"></i> Зарплата: 
+                                    {% if filters.salary_from %}от {{ filters.salary_from }}{% endif %}
+                                    {% if filters.salary_to %}до {{ filters.salary_to }}{% endif %}
+                                    {{ filters.currency }}
+                                </span>
+                            {% endif %}
+                            {% if filters.experience %}
+                                <span class="filter-tag">
+                                    <i class="fas fa-briefcase me-1"></i> Опыт: {{ filters.experience|join(', ') }}
+                                </span>
+                            {% endif %}
+                            {% if filters.employment %}
+                                <span class="filter-tag">
+                                    <i class="fas fa-user-clock me-1"></i> Тип занятости: {{ filters.employment|join(', ') }}
+                                </span>
+                            {% endif %}
+                            {% if filters.schedule %}
+                                <span class="filter-tag">
+                                    <i class="fas fa-calendar-alt me-1"></i> График: {{ filters.schedule|join(', ') }}
+                                </span>
+                            {% endif %}
+                            {% if filters.date_from or filters.date_to %}
+                                <span class="filter-tag">
+                                    <i class="fas fa-calendar me-1"></i> Период: 
+                                    {% if filters.date_from %}c {{ filters.date_from }}{% endif %}
+                                    {% if filters.date_to %}по {{ filters.date_to }}{% endif %}
+                                </span>
+                            {% endif %}
+                            {% if filters.only_with_salary %}
+                                <span class="filter-tag"><i class="fas fa-check-circle me-1"></i> Только с зарплатой</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Экспорт результатов -->
+    <div class="row mb-4 fadeIn">
+        <div class="col">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="fas fa-file-export me-2"></i> Экспорт результатов</h5>
+                    
+                    <!-- Кнопки для инициализации экспорта -->
+                    <button class="btn export-btn" onclick="exportData('pdf')">
+                        <i class="fas fa-file-pdf me-1"></i> PDF
+                    </button>
+                    <button class="btn export-btn" onclick="exportData('csv')">
+                        <i class="fas fa-file-csv me-1"></i> CSV
+                    </button>
+                    <button class="btn export-btn" onclick="exportData('excel')">
+                        <i class="fas fa-file-excel me-1"></i> Excel
+                    </button>
+                    
+                    <!-- Форма для отправки данных через POST -->
+                    <form id="exportForm" method="post" action="{{ url_for('api.export', export_type='placeholder') }}" style="display:none;">
+                        <input type="text" id="exportData" name="data" value="">
+                        <input type="text" id="exportType" name="export_type" value="">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Блок с результатами анализа вакансий -->
+    <div class="analysis-results mb-5">
+        <!-- Блоки аналитики -->
+        <div class="row fadeIn">
+            <div class="col-12">
+                <!-- Карта вакансий -->
+                {% if visualizations.map_data %}
+                <div class="card shadow mb-4 fadeIn">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="fas fa-map-marker-alt me-2"></i>Географическое распределение вакансий</h5>
+                        <div id="vacancies-map" class="map-container" style="height: 500px; min-height: 300px;"></div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Зарплаты по опыту работы - показывать только если есть данные -->
+                {% if 'salary_by_experience_median' in visualizations or 'salary_by_experience_mean' in visualizations %}
+                <div class="card shadow mb-4 fadeIn">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="fas fa-chart-line me-2"></i>Зарплаты по опыту работы</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {% if 'salary_by_experience_median' in visualizations %}
+                                    {{ visualizations.salary_by_experience_median|safe }}
+                                {% else %}
+                                    <div class="text-muted">Нет данных для медианы</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {% if 'salary_by_experience_mean' in visualizations %}
+                                    {{ visualizations.salary_by_experience_mean|safe }}
+                                {% else %}
+                                    <div class="text-muted">Нет данных для среднего</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Блок с облаком навыков -->
+                {% if visualizations.skills_wordcloud %}
+                <div class="card shadow mb-4 fadeIn wordcloud-container">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="fas fa-cloud me-2"></i>Облако ключевых навыков</h5>
+                        <img class="wordcloud-img" src="data:image/png;base64,{{ visualizations.skills_wordcloud }}" alt="Облако навыков">
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Диаграммы по опыту работы: pie и bar -->
+                {% if 'experience_chart' in visualizations or 'experience_bar_chart' in visualizations or 'experience_pie_chart' in visualizations %}
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card shadow mb-4 fadeIn">
+                      <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="fas fa-chart-pie me-2"></i>Распределение вакансий по опыту (pie)</h5>
+                        {% if 'experience_pie_chart' in visualizations %}
+                          {{ visualizations.experience_pie_chart|safe }}
+                        {% elif 'experience_chart' in visualizations %}
+                          {{ visualizations.experience_chart|safe }}
+                        {% else %}
+                          <div class="text-muted">Нет данных для диаграммы</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card shadow mb-4 fadeIn">
+                      <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="fas fa-chart-bar me-2"></i>Распределение вакансий по опыту (bar)</h5>
+                        {% if 'experience_bar_chart' in visualizations %}
+                          {{ visualizations.experience_bar_chart|safe }}
+                        {% elif 'experience_chart' in visualizations %}
+                          {{ visualizations.experience_chart|safe }}
+                        {% else %}
+                          <div class="text-muted">Нет данных для диаграммы</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+                
+                <!-- Здесь будут блоки с графиками, картами и т.д. -->
+                {% if visualizations %}
+                    {% for key, block in visualizations.items() %}
+                        {% if key != 'map_data' and not key.startswith('salary_by_region_chart') and key != 'publications_chart' and key != 'regions_chart' and key != 'experience_chart' and key != 'experience_bar_chart' and key != 'experience_pie_chart' and key != 'top_skills_chart' and key != 'skills_wordcloud' and key != 'schedule_chart' and key != 'employment_chart' and key != 'salary_by_experience_median' and key != 'salary_by_experience_mean' %}
+                        <div class="card shadow mb-4 fadeIn">
+                            <div class="card-body">
+                                {{ block|safe }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Блоки с зарплатами по регионам -->
+                    {% if visualizations.salary_by_region_chart_median or visualizations.salary_by_region_chart_mean or visualizations.salary_by_region_chart_count %}
+                    <div class="card shadow mb-4 fadeIn">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3"><i class="fas fa-chart-bar me-2"></i>Зарплаты и вакансии по регионам</h5>
+                            
+                            {% if visualizations.salary_by_region_chart_median %}
+                            <div class="mb-4">
+                                {{ visualizations.salary_by_region_chart_median|safe }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if visualizations.salary_by_region_chart_mean %}
+                            <div class="mb-4">
+                                {{ visualizations.salary_by_region_chart_mean|safe }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if visualizations.salary_by_region_chart_count %}
+                            <div class="mb-4">
+                                {{ visualizations.salary_by_region_chart_count|safe }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="skeleton-block"></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+<!-- Кнопка scroll-to-top -->
+<button class="scroll-to-top" id="scrollToTopBtn" style="display:none;" aria-label="Наверх">
+    <i class="fas fa-chevron-up"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<!-- JavaScript для интерактивной карты -->
+{% if visualizations.map_data %}
+<script>
+    ymaps.ready(function () {
+        var vacanciesData = {{ visualizations.map_data|safe }};
+        var map = new ymaps.Map('vacancies-map', {
+            center: [53.9, 27.6],
+            zoom: 7,
+            controls: ['zoomControl', 'fullscreenControl']
+        });
+        var clusterer = new ymaps.Clusterer({
+            preset: 'islands#invertedBlueClusterIcons',
+            groupByCoordinates: false
+        });
+        var geoObjects = [];
+        vacanciesData.forEach(function(vacancy) {
+            var coords = [vacancy.lat, vacancy.lng];
+            var popupContent = '<strong>' + (vacancy.title || '') + '</strong>';
+            if (vacancy.employer) popupContent += '<br>Работодатель: ' + vacancy.employer;
+            if (vacancy.salary) {
+                popupContent += '<br>Зарплата: ';
+                if (vacancy.salary.from) popupContent += 'от ' + vacancy.salary.from + ' ';
+                if (vacancy.salary.to) popupContent += 'до ' + vacancy.salary.to + ' ';
+                if (vacancy.salary.currency) popupContent += vacancy.salary.currency;
+            }
+            geoObjects.push(new ymaps.Placemark(coords, {balloonContent: popupContent}, {preset: 'islands#blueDotIcon'}));
+        });
+        clusterer.add(geoObjects);
+        map.geoObjects.add(clusterer);
+        if (vacanciesData.length > 0) {
+            var bounds = clusterer.getBounds();
+            if (bounds) map.setBounds(bounds, {checkZoomRange:true, zoomMargin:40});
+        }
+    });
+</script>
+{% endif %}
+
+<!-- JavaScript для анимации счётчиков -->
+<script>
+    $(document).ready(function() {
+        $('.animated-counter').each(function() {
+            var $this = $(this);
+            var countTo = parseInt($this.text());
+            
+            $this.text('0');
+            
+            $({ countNum: 0 }).animate({
+                countNum: countTo
+            }, {
+                duration: 1500,
+                easing: 'swing',
+                step: function() {
+                    $this.text(Math.floor(this.countNum));
+                },
+                complete: function() {
+                    $this.text(this.countNum);
+                }
+            });
+        });
+    });
+</script>
+
+<!-- JavaScript для экспорта данных -->
+<script>
+    function exportData(exportType) {
+        // Проверяем, что данные есть
+        {% if visualizations %}
+            // Устанавливаем тип экспорта
+            document.getElementById('exportType').value = exportType;
+            
+            // Создаем объект для аналитических данных
+            var exportData = {
+                // Общая информация
+                "filters": {{ filters|tojson|safe }},
+                "total_count": {{ data|length if data is defined else 0 }},
+                
+                // Статистика по зарплатам (если доступна)
+                {% if summary_df is defined and not summary_df.empty %}
+                "salary_stats": {
+                    {% for _, row in summary_df.iterrows() %}
+                        {% if row['Блок'] == 'Анализ зарплат' %}
+                            {% if row['Метр'] == 'Мин. зарплата' %}
+                                "min": {{ row['Значение'] }},
+                            {% elif row['Метр'] == 'Макс. зарплата' %}
+                                "max": {{ row['Значение'] }},
+                            {% elif row['Метр'] == 'Средняя зарплата' %}
+                                "mean": {{ row['Значение'] }},
+                            {% elif row['Метр'] == 'Медианная зарплата' %}
+                                "median": {{ row['Значение'] }},
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                },
+                {% endif %}
+                
+                // Распределение по опыту
+                {% if visualizations.experience_chart is defined or visualizations.experience_pie_chart is defined or visualizations.experience_bar_chart is defined %}
+                "experience_dist": {
+                    {% if 'Нет опыта' in data|map(attribute='experience.name')|list %}
+                        "Нет опыта": {{ data|selectattr('experience.name', 'eq', 'Нет опыта')|list|length }},
+                    {% endif %}
+                    {% if 'От 1 года до 3 лет' in data|map(attribute='experience.name')|list %}
+                        "От 1 года до 3 лет": {{ data|selectattr('experience.name', 'eq', 'От 1 года до 3 лет')|list|length }},
+                    {% endif %}
+                    {% if 'От 3 до 6 лет' in data|map(attribute='experience.name')|list %}
+                        "От 3 до 6 лет": {{ data|selectattr('experience.name', 'eq', 'От 3 до 6 лет')|list|length }},
+                    {% endif %}
+                    {% if 'Более 6 лет' in data|map(attribute='experience.name')|list %}
+                        "Более 6 лет": {{ data|selectattr('experience.name', 'eq', 'Более 6 лет')|list|length }}
+                    {% endif %}
+                },
+                {% endif %}
+                
+                // Распределение по регионам
+                {% if visualizations.regions_chart is defined %}
+                "region_dist": {
+                    {% for v in data %}
+                        {% if v.area and v.area.name %}
+                            "{{ v.area.name }}": {{ data|selectattr('area.name', 'eq', v.area.name)|list|length }},
+                        {% endif %}
+                    {% endfor %}
+                },
+                {% endif %}
+                
+                // Список вакансий (ограниченно)
+                "vacancies": {{ vacancies_list|tojson|safe if vacancies_list is defined else '[]' }}
+            };
+            
+            // Копируем данные в скрытую форму
+            document.getElementById('exportData').value = JSON.stringify(exportData);
+            
+            // Обновляем URL формы
+            const form = document.getElementById('exportForm');
+            form.action = "{{ url_for('api.export', export_type='') }}" + exportType;
+            
+            // Отправляем форму
+            form.submit();
+        {% else %}
+            alert('Нет данных для экспорта');
+        {% endif %}
+    }
+</script>
+
+<!-- JavaScript для очистки кэша при покидании страницы -->
+<script>
+    // Функция для очистки кэша при покидании страницы
+    function clearCacheBeforeLeaving() {
+        // Отправляем запрос на очистку кэша при уходе со страницы
+        fetch('/clear_cache', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                console.log('Кэш успешно очищен');
+            }
+        }).catch(error => {
+            console.error('Ошибка при очистке кэша:', error);
+        });
+    }
+    
+    // Обработчик события перед переходом на другую страницу
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden') {
+            clearCacheBeforeLeaving();
+        }
+    });
+    
+    // Дополнительно добавляем обработчик на все ссылки, ведущие с этой страницы
+    document.querySelectorAll('a:not([target="_blank"])').forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Не блокируем нормальный переход по ссылке, но перед этим вызываем очистку кэша
+            clearCacheBeforeLeaving();
+        });
+    });
+    
+    // Обработчик перед закрытием страницы/вкладки
+    window.addEventListener('beforeunload', function() {
+        clearCacheBeforeLeaving();
+    });
+</script>
+{% endblock %} 

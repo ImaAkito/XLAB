@@ -1,0 +1,256 @@
+/* 
+ * Основные стили для приложения анализа IT-вакансий
+ */
+
+/* Общие стили */
+body {
+    background: #f7f8fa;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', Arial, sans-serif;
+    color: #222;
+    font-size: 17px;
+    letter-spacing: 0.01em;
+}
+
+/* Стили для карточек */
+.card, .chart-container, .vacancy-description, .info-block {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 24px 0 rgba(60, 72, 88, 0.07);
+    border: none;
+    margin-bottom: 2rem;
+    padding: 2rem 1.5rem;
+    transition: box-shadow 0.2s, transform 0.2s;
+    opacity: 1;
+}
+
+.card.fadeIn, .chart-container.fadeIn, .vacancy-description.fadeIn, .info-block.fadeIn, .fadeIn {
+    animation: fadeIn 0.7s cubic-bezier(.39,.575,.565,1) both;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: none; }
+}
+
+.card:hover, .chart-container:hover {
+    box-shadow: 0 6px 32px 0 rgba(60, 72, 88, 0.13);
+    transform: translateY(-2px) scale(1.01);
+}
+
+.btn, .export-btn {
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(90deg, #4e73df 0%, #36b9cc 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 8px rgba(78, 115, 223, 0.08);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.btn:active, .export-btn:active {
+    transform: scale(0.97);
+}
+
+.btn:hover, .export-btn:hover {
+    background: linear-gradient(90deg, #36b9cc 0%, #4e73df 100%);
+    box-shadow: 0 4px 16px rgba(54, 185, 204, 0.13);
+    color: #fff;
+}
+
+.navbar, .footer {
+    background: #fff !important;
+    box-shadow: 0 2px 12px 0 rgba(60, 72, 88, 0.04);
+    border-bottom: none;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #4e73df !important;
+    letter-spacing: 0.03em;
+}
+
+.stats-card {
+    background: #f9fafb;
+    border-radius: 16px;
+    box-shadow: none;
+    border: none;
+    padding: 1.5rem 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #4e73df;
+}
+
+.stats-label {
+    color: #888;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+.feature-box, .info-block {
+    background: #f9fafb;
+    border-radius: 16px;
+    box-shadow: none;
+    border: none;
+    padding: 1.5rem 1rem;
+}
+
+input, select, textarea {
+    border-radius: 10px !important;
+    border: 1px solid #e3e6f0 !important;
+    background: #fff !important;
+    font-size: 1rem;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    transition: border 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #4e73df !important;
+    outline: none !important;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #bbb;
+    font-size: 1.1rem;
+    pointer-events: none;
+}
+
+.sticky-filters {
+    position: sticky;
+    top: 2rem;
+    z-index: 10;
+}
+
+::-webkit-input-placeholder { color: #bbb; }
+::-moz-placeholder { color: #bbb; }
+:-ms-input-placeholder { color: #bbb; }
+::placeholder { color: #bbb; }
+
+.skeleton {
+    background: linear-gradient(90deg, #f7f8fa 25%, #ececec 50%, #f7f8fa 75%);
+    background-size: 200% 100%;
+    animation: skeleton 1.2s infinite linear;
+    border-radius: 8px;
+    min-height: 24px;
+}
+@keyframes skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #4e73df;
+}
+.empty-state img {
+    max-width: 220px;
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+}
+
+.scroll-to-top {
+    position: fixed;
+    right: 2rem;
+    bottom: 2rem;
+    z-index: 999;
+    background: #fff;
+    color: #4e73df;
+    border-radius: 50%;
+    box-shadow: 0 2px 12px rgba(60,72,88,0.13);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: none;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s, box-shadow 0.2s;
+}
+.scroll-to-top:hover {
+    opacity: 1;
+    box-shadow: 0 4px 24px rgba(78,115,223,0.18);
+}
+
+@media (max-width: 768px) {
+    .card, .chart-container, .vacancy-description, .info-block {
+        padding: 1rem 0.5rem;
+    }
+    .stats-card, .feature-box, .info-block {
+        padding: 1rem 0.5rem;
+    }
+    .sticky-filters {
+        position: static;
+        top: auto;
+    }
+    .scroll-to-top {
+        right: 1rem;
+        bottom: 1rem;
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+}
+
+/* Стили для скролл-эффектов */
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s, transform 0.8s;
+}
+
+.scroll-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Стили для интерактивной карты */
+.map-container {
+    height: 500px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+}
+
+/* Стили для диаграмм */
+.chart-title {
+    font-size: 1.2rem;
+    color: #4e73df;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+/* Стили для блоков на главной */
+.demo-viz {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.demo-viz:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для анимации счетчиков */
+.animated-value {
+    display: inline-block;
+    transition: all 0.5s ease;
+}
+
+.animated-value.highlight {
+    color: #4e73df;
+    transform: scale(1.2);
+} 

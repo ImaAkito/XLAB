@@ -1,0 +1,914 @@
+{% extends 'base.html' %}
+
+{% block title %}Анализ IT-вакансий на rabota.by{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">
+                        <i class="fas fa-chart-bar text-primary"></i> 
+                        Анализ IT-вакансий Беларуси
+                    </h2>
+                    
+                    <form action="{{ url_for('api.analyze') }}" method="post">
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-filter text-primary me-2"></i>
+                                <h5 class="mb-0">Фильтры</h5>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label d-flex align-items-center">
+                                    <i class="fas fa-search text-secondary me-2"></i>
+                                    Название вакансии
+                                </label>
+                                <div class="mb-2">
+                                    <input type="checkbox" id="select-all-vacancy-names" class="form-check-input me-2">
+                                    <label for="select-all-vacancy-names" class="form-check-label">Выбрать все</label>
+                                </div>
+                                <div class="vacancy-names mb-2 row row-cols-2 gx-2">
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Python" id="vac-python">
+                                            <label for="vac-python">Python</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Java" id="vac-java">
+                                            <label for="vac-java">Java</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="JavaScript" id="vac-js">
+                                            <label for="vac-js">JavaScript</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="C++" id="vac-cpp">
+                                            <label for="vac-cpp">C++</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="C#" id="vac-csharp">
+                                            <label for="vac-csharp">C#</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="PHP" id="vac-php">
+                                            <label for="vac-php">PHP</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Go" id="vac-go">
+                                            <label for="vac-go">Go</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Kotlin" id="vac-kotlin">
+                                            <label for="vac-kotlin">Kotlin</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Frontend" id="vac-frontend">
+                                            <label for="vac-frontend">Frontend</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Backend" id="vac-backend">
+                                            <label for="vac-backend">Backend</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Fullstack" id="vac-fullstack">
+                                            <label for="vac-fullstack">Fullstack</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="DevOps" id="vac-devops">
+                                            <label for="vac-devops">DevOps</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="QA" id="vac-qa">
+                                            <label for="vac-qa">QA</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Тестировщик" id="vac-tester">
+                                            <label for="vac-tester">Тестировщик</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Data Scientist" id="vac-data-scientist">
+                                            <label for="vac-data-scientist">Data Scientist</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Data Analyst" id="vac-data-analyst">
+                                            <label for="vac-data-analyst">Data Analyst</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="ML" id="vac-ml">
+                                            <label for="vac-ml">ML</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="AI" id="vac-ai">
+                                            <label for="vac-ai">AI</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Business Analyst" id="vac-ba">
+                                            <label for="vac-ba">Business Analyst</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Системный аналитик" id="vac-system-analyst">
+                                            <label for="vac-system-analyst">Системный аналитик</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="UX/UI" id="vac-uxui">
+                                            <label for="vac-uxui">UX/UI</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Product Manager" id="vac-product">
+                                            <label for="vac-product">Product Manager</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Project Manager" id="vac-project">
+                                            <label for="vac-project">Project Manager</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="1C" id="vac-1c">
+                                            <label for="vac-1c">1C</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Сетевой инженер" id="vac-network">
+                                            <label for="vac-network">Сетевой инженер</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Системный администратор" id="vac-sysadmin">
+                                            <label for="vac-sysadmin">Системный администратор</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Game Developer" id="vac-gamedev">
+                                            <label for="vac-gamedev">Game Developer</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="Android" id="vac-android">
+                                            <label for="vac-android">Android</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="vacancy_names[]" value="iOS" id="vac-ios">
+                                            <label for="vac-ios">iOS</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="region-dropdown" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Регион
+                                </label>
+                                <div class="custom-dropdown" id="region-dropdown-container">
+                                    <button type="button" class="form-select text-start d-flex justify-content-between align-items-center" id="region-dropdown-btn">
+                                        <span id="selected-regions-text">Выберите регионы</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <div class="custom-dropdown-menu" id="region-dropdown-menu">
+                                        <div class="custom-dropdown-search mb-2">
+                                            <input type="text" class="form-control form-control-sm" placeholder="Поиск региона..." id="region-search">
+                                        </div>
+                                        <div class="custom-dropdown-items">
+                                            <div class="region-group">
+                                                <div class="region-group-title">Города</div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-1002" name="region" value="1002">
+                                                        <label class="form-check-label" for="region-1002">Минск</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-1007" name="region" value="1007">
+                                                        <label class="form-check-label" for="region-1007">Брест</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-1005" name="region" value="1005">
+                                                        <label class="form-check-label" for="region-1005">Витебск</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-1003" name="region" value="1003">
+                                                        <label class="form-check-label" for="region-1003">Гомель</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-1006" name="region" value="1006">
+                                                        <label class="form-check-label" for="region-1006">Гродно</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-1004" name="region" value="1004">
+                                                        <label class="form-check-label" for="region-1004">Могилев</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="region-group mt-2">
+                                                <div class="region-group-title">Области</div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-2233" name="region" value="2233">
+                                                        <label class="form-check-label" for="region-2233">Брестская область</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-2234" name="region" value="2234">
+                                                        <label class="form-check-label" for="region-2234">Витебская область</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-2235" name="region" value="2235">
+                                                        <label class="form-check-label" for="region-2235">Гомельская область</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-2236" name="region" value="2236">
+                                                        <label class="form-check-label" for="region-2236">Гродненская область</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-2237" name="region" value="2237">
+                                                        <label class="form-check-label" for="region-2237">Минская область</label>
+                                                    </div>
+                                                </div>
+                                                <div class="region-item">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input region-checkbox" type="checkbox" id="region-2238" name="region" value="2238">
+                                                        <label class="form-check-label" for="region-2238">Могилевская область</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="nested-regions">
+                                                <!-- Сюда будут добавлены все области с вложенными городами -->
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                                                <button type="button" class="btn btn-sm btn-secondary" id="select-all-regions">Выбрать все</button>
+                                                <button type="button" class="btn btn-sm btn-secondary" id="clear-all-regions">Снять выбор</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Можно выбрать несколько городов или областей. Если ничего не выбрано — анализ по всей Беларуси.</small>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label class="form-label d-flex align-items-center">
+                                        <i class="fas fa-money-bill-wave text-secondary me-2"></i>
+                                        Зарплата от
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-coins"></i></span>
+                                        <input type="number" class="form-control" name="salary_from" placeholder="Мин. зарп">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label d-flex align-items-center">
+                                        <i class="fas fa-money-bill-wave text-secondary me-2"></i>
+                                        Зарплата до
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-coins"></i></span>
+                                        <input type="number" class="form-control" name="salary_to" placeholder="Макс. зарп">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label d-flex align-items-center">
+                                    <i class="fas fa-dollar-sign text-secondary me-2"></i>
+                                    Валюта
+                                </label>
+                                <select class="form-select" name="currency">
+                                    <option value="BYN" selected>BYN (Бел. рубль)</option>
+                                    <option value="USD">USD (Доллар США)</option>
+                                    <option value="EUR">EUR (Евро)</option>
+                                    <option value="RUB">RUB (Российский рубль)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label d-flex align-items-center">
+                                    <i class="fas fa-briefcase text-secondary me-2"></i>
+                                    Опыт работы
+                                </label>
+                                <div class="experience-options row row-cols-2 gx-2">
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="experience[]" value="noExperience" id="exp-no">
+                                            <label for="exp-no">Без опыта</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="experience[]" value="between1And3" id="exp-1-3">
+                                            <label for="exp-1-3">От 1 до 3 лет</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="experience[]" value="between3And6" id="exp-3-6">
+                                            <label for="exp-3-6">От 3 до 6 лет</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="experience[]" value="moreThan6" id="exp-6-plus">
+                                            <label for="exp-6-plus">Более 6 лет</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label d-flex align-items-center">
+                                    <i class="fas fa-business-time text-secondary me-2"></i>
+                                    Тип занятости
+                                </label>
+                                <div class="employment-options row row-cols-2 gx-2">
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="employment[]" value="full" id="emp-full">
+                                            <label for="emp-full">Полная занятость</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="employment[]" value="part" id="emp-part">
+                                            <label for="emp-part">Частичная занятость</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="employment[]" value="project" id="emp-project">
+                                            <label for="emp-project">Проектная работа</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="employment[]" value="volunteer" id="emp-volunteer">
+                                            <label for="emp-volunteer">Волонтерство</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label d-flex align-items-center">
+                                    <i class="fas fa-clock text-secondary me-2"></i>
+                                    График работы
+                                    
+                                </label>
+                                <div class="schedule-options row row-cols-2 gx-2">
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="schedule[]" value="fullDay" id="sch-full">
+                                            <label for="sch-full">Полный день</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="schedule[]" value="shift" id="sch-shift">
+                                            <label for="sch-shift">Сменный график</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="schedule[]" value="flexible" id="sch-flex">
+                                            <label for="sch-flex">Гибкий график</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="schedule[]" value="remote" id="sch-remote">
+                                            <label for="sch-remote">Удаленная работа</label>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="simple-checkbox">
+                                            <input type="checkbox" name="schedule[]" value="flyInFlyOut" id="sch-fly">
+                                            <label for="sch-fly">Вахтовый метод</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label class="form-label d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt text-secondary me-2"></i>
+                                        Дата от
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                        <input type="date" class="form-control" name="date_from" value="{{ last_month_date }}">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt text-secondary me-2"></i>
+                                        Дата до
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                        <input type="date" class="form-control" name="date_to" value="{{ today_date }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="simple-checkbox">
+                                    <input type="checkbox" name="only_with_salary" id="only-with-salary">
+                                    <label for="only-with-salary">
+                                        <i class="fas fa-hand-holding-usd text-secondary me-2"></i>
+                                        Только вакансии с указанной зарплатой
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary px-4 py-2">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Анализировать
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Полностью новые стили для чекбоксов */
+    .simple-checkbox {
+        position: relative;
+        padding-left: 28px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        user-select: none;
+    }
+    
+    .simple-checkbox input {
+        position: absolute;
+        opacity: 0;
+        height: 0;
+        width: 0;
+    }
+    
+    .simple-checkbox label {
+        cursor: pointer;
+        color: #444;
+        font-weight: 400;
+    }
+    
+    .simple-checkbox label:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 1px;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #4e73df;
+        background-color: #fff;
+        border-radius: 3px;
+    }
+    
+    .simple-checkbox input:checked + label:before {
+        background-color: #4e73df;
+    }
+    
+    .simple-checkbox input:checked + label:after {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 3px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    .simple-checkbox input:hover + label:before {
+        border-color: #2e59d9;
+    }
+    
+    .simple-checkbox label:hover {
+        color: #4e73df;
+    }
+    
+    .experience-options, .employment-options, .schedule-options {
+        padding-left: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .form-label {
+        margin-bottom: 0.3rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    .form-label small {
+        font-weight: 400;
+        font-size: 0.8rem;
+    }
+    
+    .mb-3 {
+        margin-bottom: 0.8rem !important;
+    }
+    
+    .custom-dropdown {
+        position: relative;
+    }
+    .custom-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.15);
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+        padding: 0.5rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .custom-dropdown-menu.show {
+        display: block;
+    }
+    .region-group-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #495057;
+    }
+    .region-item {
+        padding: 3px 5px;
+    }
+    .region-item:hover {
+        background-color: rgba(0,0,0,.05);
+        border-radius: 4px;
+    }
+</style>
+
+<!-- Удаляю всю секцию с приветствием и описанием функций -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Инициализация дат (текущая дата и месяц назад)
+        const today = new Date();
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        
+        // Форматирование дат для input[type=date]
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        // Установка значений по умолчанию для полей дат
+        $('#date_from').val(formatDate(monthAgo));
+        $('#date_to').val(formatDate(today));
+        
+        // Загрузка сохраненных значений фильтров из localStorage
+        loadFilterValues();
+        
+        // Сохранение значений фильтров при изменении
+        $('input[type="checkbox"], select, input[type="text"], input[type="date"], input[type="number"]').on('change', function() {
+            saveFilterValues();
+        });
+        
+        // Загрузить все населенные пункты из belarus_structure.json
+        $.getJSON('/static/data/belarus_structure.json', function(data) {
+            // Создаем контейнер для всех вложенных регионов
+            var nestedRegionsContainer = $('#nested-regions');
+            
+            // Основные города (уже добавлены в HTML)
+            var mainCityIds = ['1002', '1007', '1005', '1003', '1006', '1004'];
+            
+            // Создаем соответствие между ID области и ее контейнером
+            var regionContainers = {};
+            
+            // Функция для создания области с заголовком
+            function createRegionGroup(area) {
+                var areaId = area.id;
+                var areaName = area.name;
+                
+                // Проверяем, является ли это основной областью
+                if (['2233', '2234', '2235', '2236', '2237', '2238'].includes(areaId)) {
+                    // Создаем группу для этой области, если она еще не создана
+                    var groupContainer = $('<div class="region-group mt-3">');
+                    var groupTitle = $('<div class="region-group-title">').text(areaName + ' - населенные пункты');
+                    var itemsContainer = $('<div class="nested-items ml-3">');
+                    
+                    groupContainer.append(groupTitle).append(itemsContainer);
+                    nestedRegionsContainer.append(groupContainer);
+                    
+                    // Сохраняем ссылку на контейнер для вложенных элементов
+                    regionContainers[areaId] = itemsContainer;
+                }
+            }
+            
+            // Функция для добавления населенного пункта в его область
+            function addAreaToParent(area) {
+                var areaId = area.id;
+                var areaName = area.name;
+                var parentId = area.parent_id;
+                
+                // Пропускаем основные города и области, которые уже добавлены в HTML
+                if (mainCityIds.includes(areaId) || ['2233', '2234', '2235', '2236', '2237', '2238'].includes(areaId)) {
+                    return;
+                }
+                
+                // Проверяем, есть ли родительский контейнер
+                if (parentId && regionContainers[parentId]) {
+                    // Создаем элемент для населенного пункта
+                    var regionItem = $('<div class="region-item">');
+                    var formCheck = $('<div class="form-check">');
+                    var input = $('<input class="form-check-input region-checkbox" type="checkbox">')
+                        .attr('id', 'region-' + areaId)
+                        .attr('name', 'region')
+                        .attr('value', areaId);
+                    var label = $('<label class="form-check-label">')
+                        .attr('for', 'region-' + areaId)
+                        .text(areaName);
+                    
+                    formCheck.append(input).append(label);
+                    regionItem.append(formCheck);
+                    
+                    // Добавляем в родительский контейнер
+                    regionContainers[parentId].append(regionItem);
+                }
+            }
+            
+            // Сначала создаем все области (контейнеры)
+            function processAreasFirst(area) {
+                createRegionGroup(area);
+                
+                // Рекурсивно обрабатываем дочерние регионы
+                if (area.areas && area.areas.length > 0) {
+                    for (var i = 0; i < area.areas.length; i++) {
+                        processAreasFirst(area.areas[i]);
+                    }
+                }
+            }
+            
+            // Затем добавляем все населенные пункты в соответствующие области
+            function processAreasSecond(area) {
+                addAreaToParent(area);
+                
+                // Рекурсивно обрабатываем дочерние регионы
+                if (area.areas && area.areas.length > 0) {
+                    for (var i = 0; i < area.areas.length; i++) {
+                        processAreasSecond(area.areas[i]);
+                    }
+                }
+            }
+            
+            // Обрабатываем корневой элемент и его дочерние регионы
+            if (data.areas && data.areas.length > 0) {
+                // Сначала создаем структуру областей
+                for (var i = 0; i < data.areas.length; i++) {
+                    processAreasFirst(data.areas[i]);
+                }
+                
+                // Затем заполняем населенными пунктами
+                for (var i = 0; i < data.areas.length; i++) {
+                    processAreasSecond(data.areas[i]);
+                }
+            }
+        });
+        
+        // Открытие/закрытие выпадающего меню регионов
+        $('#region-dropdown-btn').on('click', function() {
+            $('#region-dropdown-menu').toggleClass('show');
+        });
+        
+        // Закрытие меню при клике вне его
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#region-dropdown-container').length) {
+                $('#region-dropdown-menu').removeClass('show');
+            }
+        });
+        
+        // Поиск по регионам
+        $('#region-search').on('input', function() {
+            var searchText = $(this).val().toLowerCase();
+            $('.region-item').each(function() {
+                var regionName = $(this).find('label').text().toLowerCase();
+                if (regionName.indexOf(searchText) !== -1) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+        
+        // Выбор/снятие выбора со всех регионов
+        $('#select-all-regions').on('click', function() {
+            $('.region-checkbox').prop('checked', true);
+            updateSelectedRegionsText();
+        });
+        
+        $('#clear-all-regions').on('click', function() {
+            $('.region-checkbox').prop('checked', false);
+            updateSelectedRegionsText();
+        });
+        
+        // Обновление текста с выбранными регионами
+        function updateSelectedRegionsText() {
+            var selectedCount = $('.region-checkbox:checked').length;
+            if (selectedCount === 0) {
+                $('#selected-regions-text').text('Выберите регионы');
+            } else {
+                $('#selected-regions-text').text('Выбрано регионов: ' + selectedCount);
+            }
+            
+            // Сохраняем выбор в localStorage
+            saveFilterValues();
+        }
+        
+        // Обработка изменения состояния чекбоксов
+        $(document).on('change', '.region-checkbox', function() {
+            updateSelectedRegionsText();
+        });
+        
+        // Модифицируем функции сохранения/загрузки фильтров
+        function saveFilterValues() {
+            const filterValues = {
+                vacancy_names: getCheckboxValues('vacancy_names[]'),
+                region: getCheckboxValues('region'),
+                salary_from: $('input[name="salary_from"]').val(),
+                salary_to: $('input[name="salary_to"]').val(),
+                currency: $('select[name="currency"]').val(),
+                experience: getCheckboxValues('experience[]'),
+                employment: getCheckboxValues('employment[]'),
+                schedule: getCheckboxValues('schedule[]'),
+                date_from: $('input[name="date_from"]').val(),
+                date_to: $('input[name="date_to"]').val(),
+                only_with_salary: $('#only-with-salary').is(':checked')
+            };
+            
+            localStorage.setItem('vacancyFilterValues', JSON.stringify(filterValues));
+        }
+        
+        // Переопределяем функцию загрузки сохраненных значений
+        function loadFilterValues() {
+            const savedValues = localStorage.getItem('vacancyFilterValues');
+            if (!savedValues) return;
+            
+            try {
+                const filterValues = JSON.parse(savedValues);
+                
+                // Заполнение полей формы сохраненными значениями
+                setCheckboxValues('vacancy_names[]', filterValues.vacancy_names || []);
+                
+                // Для регионов
+                if (filterValues.region && filterValues.region.length) {
+                    filterValues.region.forEach(function(regionId) {
+                        $('#region-' + regionId).prop('checked', true);
+                    });
+                    updateSelectedRegionsText();
+                }
+                
+                $('input[name="salary_from"]').val(filterValues.salary_from || '');
+                $('input[name="salary_to"]').val(filterValues.salary_to || '');
+                $('select[name="currency"]').val(filterValues.currency || 'BYN');
+                
+                // Установка чекбоксов
+                setCheckboxValues('experience[]', filterValues.experience || []);
+                setCheckboxValues('employment[]', filterValues.employment || []);
+                setCheckboxValues('schedule[]', filterValues.schedule || []);
+                
+                // Установка дат и других полей
+                if (filterValues.date_from) $('input[name="date_from"]').val(filterValues.date_from);
+                if (filterValues.date_to) $('input[name="date_to"]').val(filterValues.date_to);
+                $('#only-with-salary').prop('checked', filterValues.only_with_salary || false);
+            } catch (error) {
+                console.error('Error loading saved filter values:', error);
+            }
+        }
+        
+        // Вспомогательная функция для получения значений выбранных чекбоксов
+        function getCheckboxValues(name) {
+            const values = [];
+            $(`input[name="${name}"]:checked`).each(function() {
+                values.push($(this).val());
+            });
+            return values;
+        }
+        
+        // Вспомогательная функция для установки значений чекбоксов
+        function setCheckboxValues(name, values) {
+            $(`input[name="${name}"]`).prop('checked', false);
+            if (values && values.length) {
+                values.forEach(function(value) {
+                    $(`input[name="${name}"][value="${value}"]`).prop('checked', true);
+                });
+            }
+        }
+        
+        // Обработка отправки формы
+        $('form').submit(function(e) {
+            // Если выбраны чекбоксы с названиями вакансий, передаем их как поисковый запрос
+            if ($('input[name="vacancy_names[]"]:checked').length > 0) {
+                // Если выбраны чекбоксы с названиями вакансий, передаем их как поисковый запрос
+                const selectedNames = getCheckboxValues('vacancy_names[]');
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'search',
+                    value: selectedNames.join(' OR ')
+                }).appendTo('form');
+            }
+        });
+
+        // Проверяем, есть ли в document.head link на стили и если нет - добавляем
+        if ($('link[href="/static/css/styles.css"]').length === 0) {
+            $('head').append('<link rel="stylesheet" href="/static/css/styles.css">');
+        }
+
+        $('#select-all-vacancy-names').on('change', function() {
+            var checked = $(this).is(':checked');
+            $('input[name="vacancy_names[]"]').prop('checked', checked);
+        });
+        // Если снять галочку вручную с любого чекбокса — снять и с "Выбрать все"
+        $('input[name="vacancy_names[]"]').on('change', function() {
+            if (!$(this).is(':checked')) {
+                $('#select-all-vacancy-names').prop('checked', false);
+            } else if ($('input[name="vacancy_names[]"]').length === $('input[name="vacancy_names[]"]:checked').length) {
+                $('#select-all-vacancy-names').prop('checked', true);
+            }
+        });
+    });
+</script>
+{% endblock %} 

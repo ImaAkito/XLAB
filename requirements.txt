@@ -1,0 +1,10 @@
+Flask
+Flask-Cors
+pandas
+matplotlib
+seaborn
+plotly
+wordcloud
+geopandas
+shapely
+requests

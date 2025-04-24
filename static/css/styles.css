@@ -1,0 +1,118 @@
+/* Стили для формы и чекбоксов */
+.simple-checkbox {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.simple-checkbox input {
+    position: absolute;
+    opacity: 0;
+    height: 0;
+    width: 0;
+}
+
+.simple-checkbox label {
+    cursor: pointer;
+    color: #444;
+    font-weight: 400;
+}
+
+.simple-checkbox label:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4e73df;
+    background-color: #fff;
+    border-radius: 3px;
+}
+
+.simple-checkbox input:checked + label:before {
+    background-color: #4e73df;
+}
+
+.simple-checkbox input:checked + label:after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.simple-checkbox input:hover + label:before {
+    border-color: #2e59d9;
+}
+
+.simple-checkbox label:hover {
+    color: #4e73df;
+}
+
+/* Стили для выпадающего списка регионов */
+.custom-dropdown {
+    position: relative;
+}
+
+.custom-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.175);
+    padding: 0.5rem;
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+.custom-dropdown-menu.show {
+    display: block;
+}
+
+/* Стили для групп регионов */
+.region-group-title {
+    font-weight: bold;
+    color: #3a3a3a;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 3px;
+    margin-top: 8px;
+}
+
+.region-item {
+    padding: 3px 5px;
+    margin-bottom: 2px;
+}
+
+.region-item:hover {
+    background-color: rgba(0,0,0,.05);
+    border-radius: 4px;
+}
+
+/* Вложенные регионы */
+.nested-items {
+    padding-left: 15px;
+    margin-top: 5px;
+}
+
+.nested-items .region-item {
+    border-left: 2px solid #f0f0f0;
+    padding-left: 8px;
+    margin-left: 5px;
+}
+
+.nested-items .region-item:hover {
+    border-left-color: #4e73df;
+} 
