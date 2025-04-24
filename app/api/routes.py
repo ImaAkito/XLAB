@@ -19,7 +19,7 @@ def analyze():
     def get_vacancies_with_fallback(filters):
         # 1. Пробуем по выбранным регионам (города/области)
         filter_params = generate_filter_query(filters)
-        filtered_vacancies = load_vacancies_with_filters(filter_params)
+        filtered_vacancies = load_vacancies_with_filters(filter_params, original_area_ids=filters.get("area", []))
         if filtered_vacancies:
             return filtered_vacancies, filter_params
         # 2. Если выбраны города, пробуем по их областям

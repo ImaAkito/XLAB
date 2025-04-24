@@ -1,15 +1,16 @@
-import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from collections import defaultdict
-from wordcloud import WordCloud
-import base64
-from io import BytesIO
-from datetime import datetime
 import numpy as np
 from currency_converter import CurrencyConverter
-
+from plotly.graph_objs import Scatter, Layout, Figure
+from plotly.offline import plot
 from app.api import geo
+import pandas as pd
+import plotly.graph_objs as go
+from wordcloud import WordCloud
+from io import BytesIO
+import base64
+
 
 def generate_all_visualizations(vacancies, filters):
     visualizations = {}
@@ -106,6 +107,8 @@ def generate_all_visualizations(vacancies, filters):
     visualizations.update(emp_vis)
     summary_blocks.append(emp_summary)
 
+    print(f"[DEBUG] Визуализации: {list(visualizations.keys())}")
+
     # Объединение всех статистик
     summary_df = pd.concat(summary_blocks, ignore_index=True)
     return visualizations, summary_df
@@ -144,57 +147,9 @@ def generate_general_block(vacancies, filters):
         visualizations["publications_chart"] = fig.to_html(full_html=False)
 
     # Круговая диаграмма по регионам
-    region_counts = {}
-    for v in vacancies:
-        area = v.get("area", {})
-        region = area.get("name")
-        if region:
-            region_counts[region] = region_counts.get(region, 0) + 1
-    if len(region_counts) >= 2:
-        sorted_regions = sorted(region_counts.items(), key=lambda x: x[1], reverse=True)
-        if len(sorted_regions) > 8:
-            top_regions = sorted_regions[:8]
-            other_count = sum(count for _, count in sorted_regions[8:])
-            regions = [region for region, _ in top_regions] + ['Другие']
-            counts = [count for _, count in top_regions] + [other_count]
-            colors = [
-                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796',
-                '#6610f2', '#fd7e14', '#6c757d'
-            ]
-        else:
-            regions = [region for region, _ in sorted_regions]
-            counts = [count for _, count in sorted_regions]
-            base_colors = [
-                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796',
-                '#6610f2', '#fd7e14'
-            ]
-            colors = base_colors[:len(regions)]
-        total_count = sum(counts)
-        custom_labels = []
-        for i, region in enumerate(regions):
-            percentage = counts[i] / total_count * 100
-            custom_labels.append(f"{region} ({counts[i]} вакансий, {percentage:.1f}%)")
-        fig = go.Figure()
-        fig.add_trace(go.Pie(
-            labels=custom_labels,
-            values=counts,
-            textinfo='none',
-            marker=dict(colors=colors),
-            hole=0.4
-        ))
-        fig.update_layout(
-            title='Распределение вакансий по регионам',
-            height=450,
-            legend=dict(
-                orientation="v",
-                yanchor="middle",
-                y=0.5,
-                xanchor="right",
-                x=1.1,
-                font=dict(size=12)
-            )
-        )
-        visualizations['regions_chart'] = fig.to_html(full_html=False)
+    fig_html = generate_regions_chart(vacancies)
+    if fig_html:
+        visualizations["regions_chart"] = fig_html
 
     # Данные для карты
     map_points = []
@@ -216,6 +171,7 @@ def generate_general_block(vacancies, filters):
 
     return visualizations, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
 
+
 # Пример: Зарплаты
 def generate_salary_block(vacancies):
     rows = []
@@ -225,7 +181,7 @@ def generate_salary_block(vacancies):
     region_count = {}
     region_mean = {}
     region_median = {}
-    
+
     print(f"[DEBUG] Анализ зарплат: получено {len(vacancies)} вакансий")
     vacancies_with_salary = 0
 
@@ -278,6 +234,7 @@ def generate_salary_block(vacancies):
 
     # Гистограмма зарплат
     fig_hist = px.histogram(s_series, nbins=20, title="Гистограмма зарплат")
+    fig_hist.update_layout(showlegend=False)  # скрываем 'variable = 0'
     visualizations["salary_histogram"] = fig_hist.to_html(full_html=False)
 
     # Barplot min/median/mean/max
@@ -562,47 +519,56 @@ def generate_experience_block(vacancies):
 # Пример: Навыки
 def generate_skills_block(vacancies, filters):
     rows = []
-    visualizations = {}
+    visualizations = []
     all_skills = []
 
     for v in vacancies:
         skills = v.get("key_skills") or []
-        all_skills.extend(skills)
+        for s in skills:
+            if isinstance(s, str):
+                all_skills.append(s)
+            elif isinstance(s, dict) and "name" in s:
+                all_skills.append(s["name"])
+
+    print(f"[DEBUG] Собрано навыков всего: {len(all_skills)}")
 
     if len(all_skills) < 5:
+        print("[DEBUG] Недостаточно навыков для анализа")
         return {}, pd.DataFrame()
 
     skill_counts = pd.Series(all_skills).value_counts()
     rows.append(["Навыки", "Всего уникальных", skill_counts.size])
     top_skills = skill_counts.head(20)
 
-    # Горизонтальный barplot, сортировка по убыванию
     fig = go.Figure()
-    skills_sorted = top_skills.index.tolist()
-    counts_sorted = top_skills.values.tolist()
     fig.add_trace(go.Bar(
-        y=skills_sorted,
-        x=counts_sorted,
+        y=top_skills.index.tolist(),
+        x=top_skills.values.tolist(),
         marker=dict(color="#4e73df"),
-        text=counts_sorted,
+        text=top_skills.values.tolist(),
         textposition='auto',
         orientation='h'
     ))
     fig.update_layout(
         title='Топ-20 востребованных навыков',
-        xaxis_title='Количество вакансий',
-        height=600
+        xaxis_title='Количество упоминаний',
+        height=600,
+        margin=dict(l=100, r=20, t=60, b=50)
     )
-    visualizations["top_skills_chart"] = fig.to_html(full_html=False)
+    visualizations_dict = {}
+    visualizations_dict["top_skills_chart"] = fig.to_html(full_html=False)
 
-    # WordCloud как base64-строка (без html-обёртки)
-    wordcloud = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate_from_frequencies(skill_counts)
+    wordcloud = WordCloud(width=800, height=400, background_color='white', colormap='viridis')\
+        .generate_from_frequencies(skill_counts)
+
     buf = BytesIO()
     wordcloud.to_image().save(buf, format="PNG")
     data = base64.b64encode(buf.getvalue()).decode("utf-8")
-    visualizations["skills_wordcloud"] = data
+    visualizations_dict["skills_wordcloud"] = data
 
-    return visualizations, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
+    print(f"[DEBUG] Визуализации навыков добавлены: {list(visualizations_dict.keys())}")
+    return visualizations_dict, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
+
 
 # Пример: Работодатели
 def generate_employers_block(vacancies):
@@ -671,3 +637,91 @@ def generate_employers_block(vacancies):
         visualizations["employers_salary_chart"] = fig2.to_html(full_html=False)
 
     return visualizations, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
+
+def generate_publication_chart(vacancies):
+
+
+    dates = []
+    for v in vacancies:
+        pub_date = v.get("published_at")
+        if pub_date:
+            try:
+                date_only = pd.to_datetime(pub_date).date()
+                dates.append(date_only)
+            except Exception:
+                continue
+
+    if not dates:
+        return None
+
+    df = pd.DataFrame(dates, columns=["date"])
+    count_by_day = df.groupby("date").size().reset_index(name="count")
+
+    trace = Scatter(
+        x=count_by_day["date"],
+        y=count_by_day["count"],
+        mode="lines+markers",
+        line=dict(color="#3366cc"),
+        marker=dict(size=6),
+        name="Вакансии"
+    )
+
+    layout = Layout(
+        title="Публикация вакансий по дням",
+        xaxis=dict(title="Дата"),
+        yaxis=dict(title="Количество вакансий"),
+        height=400
+    )
+
+    fig = Figure(data=[trace], layout=layout)
+    return plot(fig, output_type="div", include_plotlyjs=False)
+
+
+# Функция: генерация pie chart по регионам (вакансии по регионам)
+def generate_regions_chart(vacancies):
+    region_counts = {}
+    for v in vacancies:
+        area = v.get("area", {})
+        region = area.get("name")
+        if region:
+            region_counts[region] = region_counts.get(region, 0) + 1
+
+    if not region_counts or sum(region_counts.values()) == 0:
+        return None
+
+    sorted_regions = sorted(region_counts.items(), key=lambda x: x[1], reverse=True)
+    if len(sorted_regions) > 8:
+        top_regions = sorted_regions[:8]
+        other_count = sum(count for _, count in sorted_regions[8:])
+        regions = [region for region, _ in top_regions] + ['Другие']
+        counts = [count for _, count in top_regions] + [other_count]
+    else:
+        regions = [region for region, _ in sorted_regions]
+        counts = [count for _, count in sorted_regions]
+
+    total = sum(counts)
+    labels = [
+        f"{region} ({count} вакансий, {count / total * 100:.1f}%)"
+        for region, count in zip(regions, counts)
+    ]
+
+    fig = go.Figure()
+    fig.add_trace(go.Pie(
+        labels=labels,
+        values=counts,
+        textinfo='none',
+        hole=0.4,
+        marker=dict(colors=[
+            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796',
+            '#6610f2', '#fd7e14', '#6c757d'
+        ])
+    ))
+
+    fig.update_layout(
+        title='Распределение вакансий по регионам',
+        height=400,
+        showlegend=True
+    )
+
+    return fig.to_html(full_html=False)
+

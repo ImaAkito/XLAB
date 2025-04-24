@@ -451,7 +451,21 @@
                     </div>
                 </div>
                 {% endif %}
-                
+                <!-- График публикаций по дням -->
+                <div class="chart-container mb-5">
+                  <h5 class="mb-3">Публикация вакансий по дням</h5>
+                  {{ visualizations.publications_chart | safe }}
+                </div>
+
+                <!-- Диаграмма по регионам -->
+                {% if visualizations.regions_chart %}
+                <div class="chart-container mb-5">
+                  <h5 class="mb-3">Распределение вакансий по регионам</h5>
+                  {{ visualizations.regions_chart | safe }}
+                </div>
+                {% endif %}
+
+
                 <!-- Зарплаты по опыту работы - показывать только если есть данные -->
                 {% if 'salary_by_experience_median' in visualizations or 'salary_by_experience_mean' in visualizations %}
                 <div class="card shadow mb-4 fadeIn">
@@ -476,17 +490,31 @@
                     </div>
                 </div>
                 {% endif %}
-                
-                <!-- Блок с облаком навыков -->
-                {% if visualizations.skills_wordcloud %}
-                <div class="card shadow mb-4 fadeIn wordcloud-container">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3"><i class="fas fa-cloud me-2"></i>Облако ключевых навыков</h5>
-                        <img class="wordcloud-img" src="data:image/png;base64,{{ visualizations.skills_wordcloud }}" alt="Облако навыков">
-                    </div>
+
+
+                <!-- Блок 4 – Навыки -->
+                {% if visualizations.top_skills_chart %}
+                <div class="card shadow mb-4 fadeIn">
+                  <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="fas fa-layer-group me-2"></i>Топ-20 востребованных навыков</h5>
+                    {{ visualizations.top_skills_chart | safe }}
+                  </div>
                 </div>
                 {% endif %}
-                
+
+                {% if visualizations.skills_wordcloud %}
+                <div class="card shadow mb-4 fadeIn wordcloud-container">
+                  <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="fas fa-cloud me-2"></i>Облако ключевых навыков</h5>
+                    <img class="wordcloud-img" src="data:image/png;base64,{{ visualizations.skills_wordcloud }}" alt="Облако навыков">
+                  </div>
+                </div>
+                {% endif %}
+
+
+
+
+
                 <!-- Диаграммы по опыту работы: pie и bar -->
                 {% if 'experience_chart' in visualizations or 'experience_bar_chart' in visualizations or 'experience_pie_chart' in visualizations %}
                 <div class="row">

@@ -1,0 +1,58 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# VSCode
+.vscode/
+
+# Mac / Linux / Windows
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Python Jupyter Notebooks checkpoints
+.ipynb_checkpoints
+
+# Cache
+.cache/
+*.egg-info/
+
+# Output
+*.sqlite3
+*.db
+*.bak
+*.swp
+
+# Compiled HTML/static
+staticfiles/
+build/
+dist/
+
+# Flask uploads
+instance/
+uploads/
+
+# PyCharm
+.idea/
+
+# Test data
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.json
+
+# Plotly temp
+plotly.min.js
+
+# Any token/config files
+config.json
+.env

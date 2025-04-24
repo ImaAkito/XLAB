@@ -1,11 +1,11 @@
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.config import Config
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep
 import re
-
+import os
 API_URL = "https://api.rabota.by/vacancies"
 
 # Кэш структуры областей
@@ -51,12 +51,17 @@ def generate_filter_query(filters):
         params["text"] = filters["text"]
 
     # Регион
-    if filters.get("area"):
-        normalized_areas = [str(a) for a in filters["area"]]
+    area_filter = filters.get("area")
+    if area_filter:
+        normalized_areas = [str(a) for a in area_filter]
         lca_area_id = find_common_area(normalized_areas)
         print(f"[DEBUG] LCA результат для {normalized_areas}: {lca_area_id}")
         if lca_area_id:
             params["area"] = lca_area_id
+    else:
+        # Если пользователь ничего не выбрал — использовать всю Беларусь
+        print("[DEBUG] Регион не выбран — устанавливаю area = '16' (Беларусь)")
+        params["area"] = "16"
 
     # Зарплата
     if filters.get("salary_from") is not None:
@@ -83,6 +88,13 @@ def generate_filter_query(filters):
                 params[field] = value
             except ValueError:
                 print(f"[WARNING] Неверный формат даты: {field} = {value}")
+
+    # Если даты не заданы — подставить последние 30 дней
+    if "date_from" not in params or not params["date_from"]:
+        params["date_from"] = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    if "date_to" not in params or not params["date_to"]:
+        params["date_to"] = datetime.now().strftime('%Y-%m-%d')
+    print(f"[DEBUG] Используем диапазон дат: {params['date_from']} — {params['date_to']}")
 
     return params
 
@@ -147,45 +159,93 @@ def find_common_area(area_ids):
     print(f"[DEBUG] Найден LCA: {lca}")
     return lca
 
-def load_vacancies_with_filters(params):
-    print("[INFO] Начинается загрузка вакансий через API rabota.by...")
-    per_page = 50
-    params = dict(params)  # создаём копию, чтобы не менять оригинал
-    params["per_page"] = per_page
-    params["page"] = 0
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
+import os
+import re
 
-    # Получаем первую страницу, чтобы узнать количество
-    first_response = fetch_page(0, params)
-    total_pages = first_response.get("pages", 0)
-    all_items = first_response.get("items", [])
+def load_vacancies_with_filters(params, original_area_ids=None):
+    def fetch_all_in_range(start_date, end_date, base_params):
+        all_items = []
+        step = timedelta(days=7)
 
-    print(f"[INFO] Получена страница 1/{total_pages}, вакансий: {len(all_items)}")
+        current_week_start = start_date
+        while current_week_start < end_date:
+            week_end = min(current_week_start + step, end_date)
+            items = fetch_segment(current_week_start, week_end, base_params)
+            if len(items) >= 2000:
+                print(f"[INFO] Неделя {current_week_start.date()} — {week_end.date()} перегружена, дроблю по дням...")
+                current_day_start = current_week_start
+                while current_day_start < week_end:
+                    day_end = current_day_start + timedelta(days=1)
+                    items_day = fetch_segment(current_day_start, day_end, base_params)
+                    if len(items_day) >= 2000:
+                        print(f"[INFO] День {current_day_start.date()} перегружен, дроблю по 6 часам...")
+                        current_hour = current_day_start
+                        while current_hour < day_end:
+                            next_hour = current_hour + timedelta(hours=6)
+                            items_hour = fetch_segment(current_hour, next_hour, base_params)
+                            all_items.extend(items_hour)
+                            current_hour = next_hour
+                    else:
+                        all_items.extend(items_day)
+                    current_day_start = day_end
+            else:
+                all_items.extend(items)
+            current_week_start = week_end
+        return all_items
 
-    # Загружаем оставшиеся страницы
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = []
-        for page in range(1, total_pages):
-            futures.append(executor.submit(fetch_page, page, params))
+    def fetch_segment(start, end, base_params):
+        fmt = "%Y-%m-%dT%H:%M:%S" if isinstance(start, datetime) and start.time() != datetime.min.time() else "%Y-%m-%d"
+        segment_params = dict(base_params)
+        segment_params["date_from"] = start.strftime(fmt)
+        segment_params["date_to"] = end.strftime(fmt)
 
-        for future in as_completed(futures):
-            result = future.result()
-            page_num = result.get("page", "?")
-            items = result.get("items", [])
-            print(f"[INFO] Получена страница {page_num + 1}/{total_pages}, вакансий: {len(items)}")
-            all_items.extend(items)
+        print(f"[INFO] Загружаю вакансии: {segment_params['date_from']} → {segment_params['date_to']}")
+        segment_items = []
 
-    print(f"[SUCCESS] Загружено всего вакансий: {len(all_items)}")
+        try:
+            first_page = fetch_page(0, segment_params)
+            total_pages = first_page.get("pages", 0)
+            segment_items.extend(first_page.get("items", []))
+            print(f"[INFO] Получена страница 1/{total_pages}, вакансий: {len(first_page.get('items', []))}")
 
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = [executor.submit(fetch_page, page, segment_params) for page in range(1, total_pages)]
+                for future in as_completed(futures):
+                    result = future.result()
+                    page_items = result.get("items", [])
+                    print(f"[INFO] Получена страница {result.get('page', '?') + 1}/{total_pages}, вакансий: {len(page_items)}")
+                    segment_items.extend(page_items)
+        except Exception as e:
+            print(f"[ERROR] Ошибка при загрузке сегмента {segment_params['date_from']} — {segment_params['date_to']}: {e}")
+
+        print(f"[SUCCESS] Загружено всего за сегмент: {len(segment_items)}")
+        return segment_items
+
+    # Подстановка дат, если не указаны
+    if "date_from" not in params or not params["date_from"]:
+        params["date_from"] = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    if "date_to" not in params or not params["date_to"]:
+        params["date_to"] = datetime.now().strftime('%Y-%m-%d')
+    print(f"[DEBUG] Используем диапазон дат: {params['date_from']} — {params['date_to']}")
+
+    start_date = datetime.strptime(params["date_from"].split("T")[0], "%Y-%m-%d")
+    end_date = datetime.strptime(params["date_to"].split("T")[0], "%Y-%m-%d")
+
+    all_items = fetch_all_in_range(start_date, end_date, params)
     cleaned = [extract_relevant_fields(v) for v in all_items]
 
-    # ВКЛЮЧАЮ ФИЛЬТРАЦИЮ ПО IT-КЛЮЧЕВЫМ СЛОВАМ
-    it_keywords = [
-        "python", "java", "javascript", "frontend", "backend", "fullstack", "devops", "qa", "тестировщик",
-        "data scientist", "data analyst", "ml", "ai", "business analyst", "системный аналитик", "ux/ui",
-        "product manager", "project manager", "1c", "сетевой инженер", "системный администратор", "ux", "ui",
-        "game developer", "android", "ios", "c++", "c#", "php", "kotlin", "go", "sql", "oracle", "linux", "unix",
-        "docker", "kubernetes", "cloud", "aws", "azure", "flutter", "node", "react", "angular", "vue", "typescript"
-    ]
+    keywords_path = os.path.join("app", "data", "vacancies.json")
+    try:
+        with open(keywords_path, encoding="utf-8") as f:
+            it_keywords = json.load(f).get("it_keywords", [])
+            print(f"[DEBUG] Загружено ключевых слов для IT: {len(it_keywords)}")
+    except Exception as e:
+        print(f"[ERROR] Не удалось загрузить ключевые слова из vacancies.json: {e}")
+        it_keywords = []
+
     def is_it_vacancy(v):
         fields = [
             (v.get('name') or '').lower(),
@@ -193,17 +253,25 @@ def load_vacancies_with_filters(params):
             ' '.join([s.get('name', '').lower() for s in (v.get('key_skills') or [])]),
             (v.get('employer', {}).get('name') or '').lower()
         ]
+        joined = ' '.join(fields)
         for kw in it_keywords:
             kw_regex = re.escape(kw)
-            for field in fields:
-                if re.search(r'\b' + kw_regex + r'\b', field) or kw in field:
-                    return True
+            if re.search(r'\b' + kw_regex + r'\b', joined) or kw in joined:
+                return True
         return False
+
     before = len(cleaned)
     cleaned = [v for v in cleaned if is_it_vacancy(v)]
     print(f'[DEBUG] IT-фильтрация: до={before}, после={len(cleaned)}')
 
+    if original_area_ids:
+        original_area_ids = set(str(a) for a in original_area_ids)
+        cleaned = [v for v in cleaned if str(v.get('area', {}).get('id')) in original_area_ids]
+        print(f"[DEBUG] Фильтрация по исходным регионам: осталось {len(cleaned)} вакансий")
+
     return cleaned
+
+
 
 def fetch_page(page, base_params):
     """
@@ -270,7 +338,7 @@ def extract_relevant_fields(v):
             "name": employer.get("name")
         },
 
-        "key_skills": v.get("key_skills"),
+        "key_skills": [s["name"] for s in v.get("key_skills", []) if "name" in s],
         "url": v.get("alternate_url"),
         "company_logo": logo_urls.get("90")
     }
