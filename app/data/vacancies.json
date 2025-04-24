@@ -1,0 +1,15 @@
+{
+  "it_keywords": [
+    "python", "java", "javascript", "frontend", "backend", "fullstack", "devops", "qa", "тестировщик",
+    "data scientist", "data analyst", "ml", "ai", "business analyst", "системный аналитик", "ux/ui",
+    "product manager", "project manager", "1c", "сетевой инженер", "системный администратор", "ux", "ui",
+    "game developer", "android", "ios", "c++", "c#", "php", "kotlin", "go", "sql", "oracle", "linux", "unix",
+    "docker", "kubernetes", "cloud", "aws", "azure", "flutter", "node", "react", "angular", "vue", "typescript",
+    "инженер-программист", "разработчик", "software engineer", "программист", "web developer", "инженер по тестированию",
+    "system architect", "solution architect", "технический архитектор", "qa engineer", "manual testing",
+    "automation testing", "тестирование ПО", "sre", "site reliability", "ci/cd", "ansible", "terraform", "helm",
+    "nlp", "cv", "data engineer", "ml engineer", "deep learning", "mobile developer", "android developer",
+    "ios developer", "web programmer", "system analyst", "business intelligence", "etl", "dwh",
+    "tableau", "power bi", "qlik", "ssis", "ssas", "it specialist", "it engineer", "программист 1с"
+  ]
+}
