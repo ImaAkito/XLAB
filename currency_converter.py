@@ -4,8 +4,7 @@ from datetime import datetime
 from functools import lru_cache
 
 class CurrencyConverter:
-    """Класс для конвертации валют"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.base_currency = 'BYN'
@@ -21,23 +20,13 @@ class CurrencyConverter:
             'UZS': 0.00026,  # Узбекский сум
             'KGS': 0.036,  # Киргизский сом
         }
-        
-        # Обновление курсов при инициализации
+
         self.rates = {}
         self.last_update = None
         self.update_rates()
     
     @lru_cache(maxsize=1)
     def update_rates(self, force=False):
-        """
-        Обновление курсов валют через API
-        
-        Args:
-            force (bool): Принудительное обновление кэша
-            
-        Returns:
-            dict: Словарь с курсами валют
-        """
         try:
             # Можно использовать API НБРБ или другие открытые API для курсов валют
             # Пример: https://www.nbrb.by/api/exrates/rates?periodicity=0
@@ -48,30 +37,23 @@ class CurrencyConverter:
                 return self.fallback_rates
                 
             rates_data = response.json()
-            
-            # Формируем словарь с курсами
+
             rates = {self.base_currency: 1.0}
             
             for rate in rates_data:
                 currency = rate.get('Cur_Abbreviation')
                 if currency in ['USD', 'EUR', 'RUB', 'KZT', 'UZS', 'KGS']:
-                    # Получаем официальный курс и масштаб
                     scale = rate.get('Cur_Scale', 1)
                     value = rate.get('Cur_OfficialRate', 0)
                     
                     if value > 0:
-                        # Для правильной конвертации нам нужно знать, 
-                        # сколько BYN стоит 1 единица валюты
-                        # НБРБ дает значение: value BYN за scale единиц валюты
                         rates[currency] = value / scale
                     else:
                         rates[currency] = self.fallback_rates.get(currency, 1.0)
-            
-            # Добавляем RUR как синоним RUB (для обратной совместимости)
+
             if 'RUB' in rates:
                 rates['RUR'] = rates['RUB']
             else:
-                # Если RUB не найден, используем запасное значение и для RUR
                 rates['RUB'] = self.fallback_rates.get('RUB', 1.0)
                 rates['RUR'] = rates['RUB']
                 
@@ -86,38 +68,22 @@ class CurrencyConverter:
             return self.fallback_rates
     
     def convert(self, amount, from_currency, to_currency):
-        """
-        Конвертация суммы из одной валюты в другую
-        
-        Args:
-            amount (float): Сумма для конвертации
-            from_currency (str): Исходная валюта
-            to_currency (str): Целевая валюта
-            
-        Returns:
-            float: Сумма в целевой валюте
-        """
         if amount is None or amount == 0:
             return 0
-            
-        # Нормализация кодов валют
+
         from_currency = from_currency.upper() if from_currency else self.base_currency
         to_currency = to_currency.upper() if to_currency else self.base_currency
-        
-        # Альтернативные коды российского рубля
+
         if from_currency == 'RUR':
             from_currency = 'RUB'
         if to_currency == 'RUR':
             to_currency = 'RUB'
-            
-        # Если валюты совпадают, конвертация не нужна
+
         if from_currency == to_currency:
             return amount
-            
-        # Получение курсов валют
+
         rates = self.rates if self.rates else self.update_rates()
-        
-        # Если какой-то из курсов отсутствует, используем запасные значения
+
         if from_currency not in rates:
             self.logger.warning(f"Курс для {from_currency} не найден, использую запасное значение")
             from_rate = self.fallback_rates.get(from_currency, 1.0)
@@ -129,55 +95,35 @@ class CurrencyConverter:
             to_rate = self.fallback_rates.get(to_currency, 1.0)
         else:
             to_rate = rates[to_currency]
-        
-        # Прямая конвертация в зависимости от направления
+
         if to_currency == 'BYN':
-            # Конвертация в BYN: умножаем сумму на курс (сколько BYN за 1 единицу валюты)
             converted_amount = amount * from_rate
         elif from_currency == 'BYN':
-            # Конвертация из BYN: делим сумму на курс (сколько BYN за 1 единицу валюты)
             converted_amount = amount / to_rate
         else:
-            # Кросс-курс: сначала в BYN, потом в целевую валюту
-            # Сначала умножаем на курс from_currency, потом делим на курс to_currency
             converted_amount = amount * from_rate / to_rate
         
         return round(converted_amount, 2)
     
     def convert_all(self, data, target_currency='BYN'):
-        """
-        Конвертирует все зарплаты в данных в целевую валюту
-        
-        Args:
-            data (dict): Словарь с данными
-            target_currency (str): Целевая валюта
-            
-        Returns:
-            dict: Обновленный словарь с данными
-        """
-        # Копируем данные, чтобы не изменять оригинал
         result = data.copy()
-        
-        # Добавляем используемую валюту в результат
+
         result['display_currency'] = target_currency
-        
-        # Если есть статистика по зарплатам, конвертируем её
+
         if 'salary_stats' in result:
             for key in ['min', 'max', 'mean', 'median']:
                 result['salary_stats'][key] = self.convert(
                     result['salary_stats'][key],
-                    self.base_currency,  # Предполагаем, что все в BYN
+                    self.base_currency,
                     target_currency
                 )
-                
-        # Конвертация гистограммы зарплат
+
         if 'salary_histogram' in result:
             result['salary_histogram']['bins'] = [
                 self.convert(edge, self.base_currency, target_currency)
                 for edge in result['salary_histogram']['bins']
             ]
-            
-        # Конвертация зарплат по регионам
+
         if 'salary_by_region' in result:
             for region_data in result['salary_by_region']:
                 region_data['mean'] = self.convert(
@@ -190,8 +136,7 @@ class CurrencyConverter:
                     self.base_currency,
                     target_currency
                 )
-                
-        # Конвертация зарплат по опыту
+
         if 'salary_by_experience' in result:
             for exp_data in result['salary_by_experience']:
                 exp_data['mean'] = self.convert(
@@ -204,8 +149,7 @@ class CurrencyConverter:
                     self.base_currency, 
                     target_currency
                 )
-                
-        # Конвертация зарплат по работодателям
+
         if 'top_employers_detailed' in result:
             for employer_data in result['top_employers_detailed']:
                 if 'avg_salary' in employer_data:
@@ -214,8 +158,7 @@ class CurrencyConverter:
                         self.base_currency,
                         target_currency
                     )
-                    
-        # Конвертация координатных данных
+
         if 'coordinates' in result:
             for coord in result['coordinates']:
                 if coord.get('salary'):
