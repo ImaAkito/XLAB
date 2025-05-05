@@ -7,7 +7,7 @@ import requests
 _area_tree = None
 _area_name_by_id = {}
 _area_level1 = set()
-YANDEX_API_KEY = "329c30aa-ac19-49f0-87ba-1281c6c28fc9"  # ВСТАВЬ СЮДА СВОЙ КЛЮЧ
+YANDEX_API_KEY = "329c30aa-ac19-49f0-87ba-1281c6c28fc9"
 _geocode_cache = {}
 
 def load_area_structure():
@@ -135,9 +135,6 @@ def get_map_data(vacancies, selected_city=None):
     return map_points
 
 def get_region_aggregates(vacancies):
-    """
-    Возвращает агрегации по высокоуровневым регионам
-    """
     load_area_structure()
     region_data = defaultdict(list)
 
@@ -184,9 +181,6 @@ def get_region_aggregates(vacancies):
     return region_summary
 
 def find_top_level_region(area_id):
-    """
-    Находит ближайший ID региона первого уровня вверх по дереву
-    """
     load_area_structure()
     current = area_id
     visited = set()
@@ -203,9 +197,6 @@ def find_top_level_region(area_id):
     return None
 
 def find_parent_id(child_id):
-    """
-    Прямой обход дерева для нахождения родителя
-    """
     def search(tree, parent=None):
         if tree["id"] == child_id:
             return parent
