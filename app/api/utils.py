@@ -8,12 +8,10 @@ import re
 import os
 API_URL = "https://api.rabota.by/vacancies"
 
-# Кэш структуры областей
 _area_tree = None
 _area_index = {}
 
 def extract_filter_data(form):
-    # Преобразуем значения фильтров из формы в словарь
     filters = {}
 
     for key in Config.ALLOWED_FILTERS:
@@ -39,18 +37,12 @@ def extract_filter_data(form):
     return filters
 
 def generate_filter_query(filters):
-    """
-    Формирует словарь параметров (params) для запроса к API или локальной фильтрации.
-    Обрабатывает все поля из filters: текст, area, зарплаты, опыт, занятость, график, даты.
-    """
     load_area_tree()
     params = {}
 
-    # Текст
     if filters.get("text"):
         params["text"] = filters["text"]
 
-    # Регион
     area_filter = filters.get("area")
     if area_filter:
         normalized_areas = [str(a) for a in area_filter]
@@ -59,27 +51,22 @@ def generate_filter_query(filters):
         if lca_area_id:
             params["area"] = lca_area_id
     else:
-        # Если пользователь ничего не выбрал — использовать всю Беларусь
         print("[DEBUG] Регион не выбран — устанавливаю area = '16' (Беларусь)")
         params["area"] = "16"
 
-    # Зарплата
     if filters.get("salary_from") is not None:
         params["salary_from"] = filters["salary_from"]
     if filters.get("salary_to") is not None:
         params["salary_to"] = filters["salary_to"]
 
-    # Даже если False — сохраняем
     if "only_with_salary" in filters:
         params["only_with_salary"] = filters["only_with_salary"]
 
-    # Опыт, занятость, график
     for field in ("experience", "employment", "schedule"):
         values = filters.get(field)
         if isinstance(values, list) and values:
             params[field] = values
 
-    # Даты
     for field in ("date_from", "date_to"):
         value = filters.get(field)
         if value:
@@ -89,7 +76,6 @@ def generate_filter_query(filters):
             except ValueError:
                 print(f"[WARNING] Неверный формат даты: {field} = {value}")
 
-    # Если даты не заданы — подставить последние 30 дней
     if "date_from" not in params or not params["date_from"]:
         params["date_from"] = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
     if "date_to" not in params or not params["date_to"]:
@@ -119,10 +105,6 @@ def load_area_tree():
         index_area(_area_tree)
 
 def find_common_area(area_ids):
-    """
-    Находит наименьшего общего предка (LCA) для списка ID регионов.
-    Если один регион — возвращает его.
-    """
     load_area_tree()
 
     if not area_ids:
@@ -224,7 +206,6 @@ def load_vacancies_with_filters(params, original_area_ids=None):
         print(f"[SUCCESS] Загружено всего за сегмент: {len(segment_items)}")
         return segment_items
 
-    # Подстановка дат, если не указаны
     if "date_from" not in params or not params["date_from"]:
         params["date_from"] = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
     if "date_to" not in params or not params["date_to"]:
@@ -274,16 +255,13 @@ def load_vacancies_with_filters(params, original_area_ids=None):
 
 
 def fetch_page(page, base_params):
-    """
-    Загружает одну страницу с API rabota.by
-    """
     params = dict(base_params)
     params["page"] = page
     headers = {
         "User-Agent": "JobAnalyzer/1.0"
     }
 
-    for attempt in range(3):  # Повторные попытки при ошибках
+    for attempt in range(3):
         try:
             response = requests.get(API_URL, params=params, headers=headers, timeout=10)
             if response.status_code == 200:
@@ -294,7 +272,7 @@ def fetch_page(page, base_params):
                 print(f"[WARNING] Ошибка {response.status_code} при загрузке страницы {page}")
         except Exception as e:
             print(f"[ERROR] Ошибка при запросе страницы {page}: {e}")
-        sleep(1)  # Подождать перед следующей попыткой
+        sleep(1)
 
     print(f"[FAIL] Не удалось загрузить страницу {page}")
     return {"items": [], "page": page}
