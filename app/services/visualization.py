@@ -16,7 +16,6 @@ def generate_all_visualizations(vacancies, filters):
     visualizations = {}
     summary_blocks = []
 
-    # --- Интеграция с CurrencyConverter ---
     converter = CurrencyConverter()
     target_currency = filters.get('currency', 'BYN')
     converted_vacancies = []
@@ -33,9 +32,7 @@ def generate_all_visualizations(vacancies, filters):
                 v_copy['salary']['to'] = converter.convert(to_val, currency, target_currency)
             v_copy['salary']['currency'] = target_currency
         converted_vacancies.append(v_copy)
-    # --- конец интеграции ---
 
-    # Определяем выбранный город (если только один)
     selected_city = None
     if filters.get('region') and isinstance(filters['region'], list) and len(filters['region']) == 1:
         selected_city = filters['region'][0]
@@ -46,7 +43,6 @@ def generate_all_visualizations(vacancies, filters):
     elif filters.get('area') and isinstance(filters['area'], str):
         selected_city = filters['area']
 
-    # Преобразуем id города в название, если это id
     if selected_city and selected_city.isdigit():
         from app.api.geo import get_area_name
         selected_city = get_area_name(selected_city)
@@ -82,39 +78,31 @@ def generate_all_visualizations(vacancies, filters):
         fig = px.bar(df_median, x="Регион", y="Медианная зарплата", title="Медианная зарплата по регионам")
         visualizations["salary_by_region_chart_median"] = fig.to_html(full_html=False)
 
-    # Блок 1: Общая характеристика
     general_vis, general_summary = generate_general_block(converted_vacancies, filters)
     visualizations.update(general_vis)
     summary_blocks.append(general_summary)
 
-    # Блок 2: Зарплаты
     salary_vis, salary_summary = generate_salary_block(converted_vacancies)
     visualizations.update(salary_vis)
     summary_blocks.append(salary_summary)
 
-    # Блок 3: Опыт, занятость, график
     exp_vis, exp_summary = generate_experience_block(converted_vacancies)
     visualizations.update(exp_vis)
     summary_blocks.append(exp_summary)
 
-    # Блок 4: Навыки
     skill_vis, skill_summary = generate_skills_block(converted_vacancies, filters)
     visualizations.update(skill_vis)
     summary_blocks.append(skill_summary)
 
-    # Блок 5: Работодатели
     emp_vis, emp_summary = generate_employers_block(converted_vacancies)
     visualizations.update(emp_vis)
     summary_blocks.append(emp_summary)
 
     print(f"[DEBUG] Визуализации: {list(visualizations.keys())}")
 
-    # Объединение всех статистик
     summary_df = pd.concat(summary_blocks, ignore_index=True)
     return visualizations, summary_df
 
-
-# Пример: Общая характеристика
 def generate_general_block(vacancies, filters):
     rows = []
     visualizations = {}
@@ -122,7 +110,6 @@ def generate_general_block(vacancies, filters):
     count = len(vacancies)
     rows.append(["Общая характеристика", "Всего вакансий", count])
 
-    # График публикаций по датам
     dates = [v.get("published_at")[:10] for v in vacancies if v.get("published_at")]
     if dates:
         df = pd.DataFrame(dates, columns=["date"])
@@ -146,12 +133,10 @@ def generate_general_block(vacancies, filters):
         )
         visualizations["publications_chart"] = fig.to_html(full_html=False)
 
-    # Круговая диаграмма по регионам
     fig_html = generate_regions_chart(vacancies)
     if fig_html:
         visualizations["regions_chart"] = fig_html
 
-    # Данные для карты
     map_points = []
     for v in vacancies:
         addr = v.get("address", {})
@@ -171,8 +156,6 @@ def generate_general_block(vacancies, filters):
 
     return visualizations, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
 
-
-# Пример: Зарплаты
 def generate_salary_block(vacancies):
     rows = []
     salary_data = []
@@ -202,14 +185,12 @@ def generate_salary_block(vacancies):
         salary_data.append(avg_salary)
         vacancies_with_salary += 1
 
-        # По опыту
         exp = v.get("experience")
         if exp:
             if isinstance(exp, dict):
                 exp = exp.get("name") or str(exp)
             experience_salary.setdefault(exp, []).append(avg_salary)
-            
-        # По региону
+
         area = v.get("area", {})
         region = area.get("name")
         if region:
@@ -232,12 +213,10 @@ def generate_salary_block(vacancies):
 
     visualizations = {}
 
-    # Гистограмма зарплат
     fig_hist = px.histogram(s_series, nbins=20, title="Гистограмма зарплат")
-    fig_hist.update_layout(showlegend=False)  # скрываем 'variable = 0'
+    fig_hist.update_layout(showlegend=False)
     visualizations["salary_histogram"] = fig_hist.to_html(full_html=False)
 
-    # Barplot min/median/mean/max
     stats_data = [s_series.min(), s_series.median(), s_series.mean(), s_series.max()]
     labels = ['Минимальная', 'Медиана', 'Средняя', 'Максимальная']
     fig_stats = go.Figure()
@@ -255,12 +234,10 @@ def generate_salary_block(vacancies):
     )
     visualizations["salary_stats_chart"] = fig_stats.to_html(full_html=False)
 
-    # Barplot по регионам (медианная, средняя, количество)
     if region_salary:
         for region, vals in region_salary.items():
             region_mean[region] = np.mean(vals)
             region_median[region] = np.median(vals)
-        # Медианная
         df_median = pd.DataFrame({
             "region": list(region_median.keys()),
             "median": list(region_median.values())
@@ -280,7 +257,6 @@ def generate_salary_block(vacancies):
             height=450
         )
         visualizations["salary_by_region_chart_median"] = fig_median.to_html(full_html=False)
-        # Средняя
         df_mean = pd.DataFrame({
             "region": list(region_mean.keys()),
             "mean": list(region_mean.values())
@@ -300,7 +276,6 @@ def generate_salary_block(vacancies):
             height=450
         )
         visualizations["salary_by_region_chart_mean"] = fig_mean.to_html(full_html=False)
-        # Количество
         df_count = pd.DataFrame({
             "region": list(region_count.keys()),
             "count": list(region_count.values())
@@ -321,11 +296,9 @@ def generate_salary_block(vacancies):
         )
         visualizations["salary_by_region_chart_count"] = fig_count.to_html(full_html=False)
 
-    # Barplot по опыту (медиана и средняя)
     if experience_salary and len(experience_salary) >= 2:
         print(f"[DEBUG] Создание диаграмм зарплаты по опыту. Категории опыта: {list(experience_salary.keys())}")
-        
-        # Сортируем категории опыта по логическому порядку
+
         def sort_experience(exp_name):
             exp_order = {
                 'Нет опыта': 0,
@@ -342,8 +315,7 @@ def generate_salary_block(vacancies):
             exp_medians = [np.median(experience_salary[exp]) for exp in exp_labels]
             exp_means = [np.mean(experience_salary[exp]) for exp in exp_labels]
             print(f"[DEBUG] Данные для диаграмм: медианы={exp_medians}, средние={exp_means}")
-            
-            # Медиана
+
             fig_exp_median = go.Figure()
             fig_exp_median.add_trace(go.Bar(
                 x=exp_labels,
@@ -360,8 +332,7 @@ def generate_salary_block(vacancies):
             )
             visualizations["salary_by_experience_median"] = fig_exp_median.to_html(full_html=False)
             print(f"[DEBUG] Создана диаграмма медианной зарплаты: длина HTML={len(visualizations['salary_by_experience_median'])}")
-            
-            # Средняя
+
             fig_exp_mean = go.Figure()
             fig_exp_mean.add_trace(go.Bar(
                 x=exp_labels,
@@ -380,7 +351,6 @@ def generate_salary_block(vacancies):
             print(f"[DEBUG] Создана диаграмма средней зарплаты: длина HTML={len(visualizations['salary_by_experience_mean'])}")
         except Exception as e:
             print(f"[ERROR] Ошибка при создании диаграмм зарплат по опыту: {str(e)}")
-            # Проверяем данные более детально
             for exp, salaries in experience_salary.items():
                 print(f"[DEBUG] Опыт '{exp}': {len(salaries)} зарплат, данные: {salaries[:5]}{'...' if len(salaries) > 5 else ''}")
     else:
@@ -390,7 +360,6 @@ def generate_salary_block(vacancies):
 
     return visualizations, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
 
-# Пример: Опыт и график
 def generate_experience_block(vacancies):
     rows = []
     visualizations = {}
@@ -422,7 +391,6 @@ def generate_experience_block(vacancies):
 
     print(f"[DEBUG] Собраны данные по опыту: {dict(experience)}")
 
-    # Barplot по опыту (горизонтальный, сортировка)
     if experience and len(experience) >= 3:
         def sort_experience(exp_name):
             exp_order = {
@@ -451,8 +419,7 @@ def generate_experience_block(vacancies):
         )
         visualizations["experience_chart"] = fig.to_html(full_html=False)
         print(f"[DEBUG] Создана диаграмма опыта (bar): длина HTML = {len(visualizations['experience_chart'])}")
-        
-        # Добавляем новую круговую диаграмму
+
         fig_pie = go.Figure()
         fig_pie.add_trace(go.Pie(
             labels=exp_labels,
@@ -470,7 +437,6 @@ def generate_experience_block(vacancies):
     else:
         print(f"[DEBUG] Недостаточно данных для диаграммы опыта: {len(experience)} категорий (нужно минимум 3)")
 
-    # Pie по графику работы
     if schedule and len(schedule) >= 2:
         schedule_labels = list(schedule.keys())
         schedule_counts = list(schedule.values())
@@ -490,7 +456,6 @@ def generate_experience_block(vacancies):
     else:
         print(f"[DEBUG] Недостаточно данных для диаграммы графика работы: {len(schedule)} категорий (нужно минимум 2)")
 
-    # Barplot по типу занятости
     if employment and len(employment) >= 2:
         employment_labels = list(employment.keys())
         employment_counts = list(employment.values())
@@ -516,7 +481,6 @@ def generate_experience_block(vacancies):
     print(f"[DEBUG] Итого создано диаграмм: {len(visualizations)}")
     return visualizations, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
 
-# Пример: Навыки
 def generate_skills_block(vacancies, filters):
     rows = []
     visualizations = []
@@ -569,8 +533,6 @@ def generate_skills_block(vacancies, filters):
     print(f"[DEBUG] Визуализации навыков добавлены: {list(visualizations_dict.keys())}")
     return visualizations_dict, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
 
-
-# Пример: Работодатели
 def generate_employers_block(vacancies):
     rows = []
     visualizations = {}
@@ -598,7 +560,6 @@ def generate_employers_block(vacancies):
 
     emp_counts = pd.DataFrame(employers.items(), columns=["Работодатель", "Кол-во"]).sort_values(by="Кол-во", ascending=False)
     top10 = emp_counts.head(10)
-    # Горизонтальный barplot по топ-10 работодателям
     fig1 = go.Figure()
     fig1.add_trace(go.Bar(
         y=top10["Работодатель"],
@@ -615,7 +576,6 @@ def generate_employers_block(vacancies):
     )
     visualizations["top_employers_chart"] = fig1.to_html(full_html=False)
 
-    # Средние зарплаты по работодателям (горизонтальный barplot)
     avg_salaries = [(k, sum(v)/len(v)) for k, v in salaries.items() if len(v) >= 2]
     if avg_salaries:
         df_avg = pd.DataFrame(avg_salaries, columns=["Работодатель", "Средняя зарплата"]).sort_values(by="Средняя зарплата", ascending=False).head(10)
@@ -639,8 +599,6 @@ def generate_employers_block(vacancies):
     return visualizations, pd.DataFrame(rows, columns=["Блок", "Метр", "Значение"])
 
 def generate_publication_chart(vacancies):
-
-
     dates = []
     for v in vacancies:
         pub_date = v.get("published_at")
@@ -676,8 +634,6 @@ def generate_publication_chart(vacancies):
     fig = Figure(data=[trace], layout=layout)
     return plot(fig, output_type="div", include_plotlyjs=False)
 
-
-# Функция: генерация pie chart по регионам (вакансии по регионам)
 def generate_regions_chart(vacancies):
     region_counts = {}
     for v in vacancies:
