@@ -12,7 +12,6 @@ def index():
 
 @api_bp.route('/analyze', methods=['POST'])
 def analyze():
-    # Извлекаем фильтры из формы
     filters = extract_filter_data(request.form)
 
     # --- Fallback логика ---
@@ -46,10 +45,8 @@ def analyze():
 
     filtered_vacancies, used_filter_params = get_vacancies_with_fallback(filters)
 
-    # Генерация визуализаций и сводки
     visualizations, summary_df = generate_all_visualizations(filtered_vacancies, filters)
 
-    # Подготовка списка вакансий для отображения (ограничиваем 50)
     vacancies_list = []
     for v in filtered_vacancies[:50]:
         vacancy_info = {
@@ -67,7 +64,6 @@ def analyze():
         }
         vacancies_list.append(vacancy_info)
 
-    # Логирование
     log_dir = 'logs'
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, 'filters.log')
@@ -84,7 +80,6 @@ def analyze():
         else:
             log_file.write("Блоки статистики: –\n")
 
-    # Рендер
     return render_template('analysis.html',
                            data=filtered_vacancies,
                            vacancies_list=vacancies_list,
@@ -108,11 +103,9 @@ def export(export_type):
         return redirect(url_for("api.index"))
 
     parsed_data = json.loads(data)
-    
-    # Создаем различные датафреймы для экспорта
+
     analytics_data = []
-    
-    # 1. Информация о запросе
+
     if 'filters' in parsed_data:
         filters_df = pd.DataFrame([{
             'Параметр': 'Текстовый запрос',
@@ -128,8 +121,7 @@ def export(export_type):
             'Значение': parsed_data.get('total_count', 0)
         }])
         analytics_data.append(('Общая информация', filters_df))
-    
-    # 2. Статистика зарплат
+
     if 'salary_stats' in parsed_data:
         salary_stats = parsed_data.get('salary_stats', {})
         salary_df = pd.DataFrame([
@@ -139,8 +131,7 @@ def export(export_type):
             {'Показатель': 'Медианная зарплата', 'Значение': salary_stats.get('median', 'Н/Д')}
         ])
         analytics_data.append(('Статистика зарплат', salary_df))
-    
-    # 3. Распределение по опыту
+
     if 'experience_dist' in parsed_data:
         exp_dist = parsed_data.get('experience_dist', {})
         exp_df = pd.DataFrame([
@@ -148,8 +139,7 @@ def export(export_type):
             for key, value in exp_dist.items()
         ])
         analytics_data.append(('Распределение по опыту', exp_df))
-    
-    # 4. Распределение по регионам
+
     if 'region_dist' in parsed_data:
         region_dist = parsed_data.get('region_dist', {})
         region_df = pd.DataFrame([
@@ -157,8 +147,7 @@ def export(export_type):
             for key, value in region_dist.items()
         ])
         analytics_data.append(('Распределение по регионам', region_df))
-    
-    # 5. Топ навыков
+
     if 'skills' in parsed_data:
         skills = parsed_data.get('skills', {})
         skills_df = pd.DataFrame([
@@ -166,12 +155,10 @@ def export(export_type):
             for key, value in skills.items()
         ]).sort_values('Количество упоминаний', ascending=False)
         analytics_data.append(('Топ навыков', skills_df))
-    
-    # 6. Вакансии (ограниченный список)
+
     if 'vacancies' in parsed_data:
         vacancies = parsed_data.get('vacancies', [])
         if vacancies:
-            # Преобразуем зарплаты в читаемый формат
             for v in vacancies:
                 if v.get('has_salary') and v.get('salary'):
                     salary = v['salary']
@@ -183,8 +170,7 @@ def export(export_type):
                         v['salary_display'] = f"до {salary['to']} {salary.get('currency', '')}"
                 else:
                     v['salary_display'] = 'Не указана'
-                    
-            # Создаем DataFrame из списка вакансий
+
             vac_df = pd.DataFrame([{
                 'Название': v.get('name', ''),
                 'Компания': v.get('company', ''),
@@ -197,21 +183,16 @@ def export(export_type):
 
     output = io.BytesIO()
     if export_type == 'csv':
-        # CSV экспорт (создаем простой csv файл)
         combined_df = pd.DataFrame()
         for sheet_name, df in analytics_data:
             if not df.empty:
-                # Добавляем заголовок секции
                 header_df = pd.DataFrame([{'': f'=== {sheet_name} ==='}])
-                # Объединяем в один DataFrame с разделителями
                 combined_df = pd.concat([combined_df, header_df, df, pd.DataFrame([{'': ''}])], ignore_index=True)
-                
-        # Экспортируем в CSV
+
         combined_df.to_csv(output, index=False)
         mime = 'text/csv'
         ext = 'csv'
     elif export_type == 'excel':
-        # Excel экспорт с несколькими вкладками
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             for i, (sheet_name, df) in enumerate(analytics_data):
                 if not df.empty:
@@ -228,8 +209,7 @@ def export(export_type):
             plt.suptitle('Анализ IT-вакансий', fontsize=16, y=0.98)
             plt.figtext(0.5, 0.94, 'Отчет создан: ' + pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S'), 
                        ha='center', fontsize=10, style='italic')
-            
-            # Параметры запроса
+
             if analytics_data and len(analytics_data) > 0:
                 info_df = analytics_data[0][1]
                 plt.figtext(0.1, 0.85, 'Параметры поиска:', fontsize=12, weight='bold')
@@ -241,15 +221,13 @@ def export(export_type):
             plt.axis('off')
             pdf.savefig()
             plt.close()
-            
-            # Добавляем остальные таблицы
+
             for sheet_name, df in analytics_data[1:]:
                 if not df.empty:
                     fig, ax = plt.subplots(figsize=(11, 8.5))
                     ax.axis('off')
                     plt.suptitle(sheet_name, fontsize=14, y=0.98)
-                    
-                    # Отображаем таблицу
+
                     table = ax.table(
                         cellText=df.values,
                         colLabels=df.columns,
