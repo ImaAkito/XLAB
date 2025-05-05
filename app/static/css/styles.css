@@ -1,8 +1,4 @@
-/* 
- * Основные стили для приложения анализа IT-вакансий
- */
 
-/* Общие стили */
 body {
     background: #f7f8fa;
     font-family: 'Inter', 'Segoe UI', 'Roboto', Arial, sans-serif;
@@ -11,7 +7,6 @@ body {
     letter-spacing: 0.01em;
 }
 
-/* Стили для карточек */
 .card, .chart-container, .vacancy-description, .info-block {
     background: #fff;
     border-radius: 18px;
@@ -204,7 +199,6 @@ input:focus, select:focus, textarea:focus {
     }
 }
 
-/* Стили для скролл-эффектов */
 .scroll-reveal {
     opacity: 0;
     transform: translateY(20px);
@@ -216,7 +210,6 @@ input:focus, select:focus, textarea:focus {
     transform: translateY(0);
 }
 
-/* Стили для интерактивной карты */
 .map-container {
     height: 500px;
     border-radius: 0.5rem;
@@ -224,7 +217,6 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
 }
 
-/* Стили для диаграмм */
 .chart-title {
     font-size: 1.2rem;
     color: #4e73df;
@@ -233,7 +225,6 @@ input:focus, select:focus, textarea:focus {
     border-bottom: 1px solid #e3e6f0;
 }
 
-/* Стили для блоков на главной */
 .demo-viz {
     transition: all 0.3s ease;
     cursor: pointer;
@@ -244,7 +235,6 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
 }
 
-/* Стили для анимации счетчиков */
 .animated-value {
     display: inline-block;
     transition: all 0.5s ease;
