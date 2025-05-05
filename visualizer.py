@@ -12,10 +12,8 @@ import re
 from collections import Counter
 
 class Visualizer:
-    """Класс для создания визуализаций данных о вакансиях"""
     
     def __init__(self):
-        # Настройка цветов для графиков
         self.colors = {
             'primary': '#4e73df',
             'success': '#1cc88a',
@@ -26,66 +24,45 @@ class Visualizer:
             'light': '#f8f9fc',
             'dark': '#5a5c69'
         }
-        
-        # Настройка темы для Plotly
+
         pio.templates.default = "plotly_white"
-        
-        # Настройка удаления логотипа Plotly со всех графиков
+
         self.config = {
-            'displayModeBar': False,  # Скрываем панель инструментов
-            'displaylogo': False,     # Скрываем логотип Plotly
-            'responsive': True,       # Делаем график адаптивным
-            'staticPlot': False       # Разрешаем интерактивность
+            'displayModeBar': False,
+            'displaylogo': False,
+            'responsive': True,
+            'staticPlot': False
         }
     
     def create_visualizations(self, data, filters):
-        """
-        Создание всех необходимых визуализаций
-        
-        Args:
-            data (dict): Словарь с данными для визуализации
-            filters (dict): Параметры фильтрации
-            
-        Returns:
-            dict: Словарь с HTML-кодом визуализаций
-        """
         if data.get('count', 0) == 0:
             return {'no_data': True}
             
         result = {}
-        
-        # Блок 1: Общая характеристика вакансий
+
         result.update(self._create_general_info_block(data, filters))
-        
-        # Блок 2: Анализ зарплат (если есть данные по зарплатам)
+
         if data.get('has_salary_data', False):
             result.update(self._create_salary_block(data, filters))
-        
-        # Блок 3: Опыт и график работы
+
         result.update(self._create_experience_schedule_block(data, filters))
-        
-        # Блок 4: Навыки
+
         result.update(self._create_skills_block(data, filters))
-        
-        # Блок 5: Работодатели
+
         if data.get('count', 0) >= 5 and 'top_employers' in data:
             result.update(self._create_employers_block(data, filters))
-        
-        # Блок 6: Технологии (экспериментальный)
+
         if 'top_skills' in data and len(data['top_skills']) >= 10:
             result.update(self._create_tech_grid_block(data, filters))
-        
-        # Блок 7: Рейтинг профессий (экспериментальный, если текст не задан)
+
         if not filters.get('text') and 'keywords' in data:
             result.update(self._create_professions_block(data, filters))
             
         return result
     
     def _create_general_info_block(self, data, filters):
-        """Создание блока с общей информацией о вакансиях"""
         result = {}
-        
-        # График публикаций по дням
+
         if 'publications_by_day' in data:
             fig = go.Figure()
             dates = list(data['publications_by_day'].keys())
@@ -109,13 +86,10 @@ class Visualizer:
             )
             
             result['publications_chart'] = pio.to_html(fig, full_html=False, config=self.config)
-        
-        # Круговая диаграмма по регионам (если выбран один уровень и есть >=2 региона)
+
         if 'regions' in data and len(data['regions']) >= 2:
             fig = go.Figure()
-            
-            # Сортируем регионы по количеству вакансий и ограничиваем до 10 самых популярных
-            # Остальные группируем в категорию "Другие"
+
             sorted_regions = sorted(data['regions'].items(), key=lambda x: x[1], reverse=True)
             
             if len(sorted_regions) > 8:
@@ -124,8 +98,7 @@ class Visualizer:
                 
                 regions = [region for region, _ in top_regions] + ['Другие']
                 counts = [count for _, count in top_regions] + [other_count]
-                
-                # Создаем палитру цветов (8 основных + 1 для "Другие")
+
                 colors = [
                     self.colors['primary'], self.colors['success'], self.colors['info'],
                     self.colors['warning'], self.colors['danger'], self.colors['secondary'],
@@ -134,16 +107,14 @@ class Visualizer:
             else:
                 regions = [region for region, _ in sorted_regions]
                 counts = [count for _, count in sorted_regions]
-                
-                # Создаем палитру цветов соответствующего размера
+
                 base_colors = [
                     self.colors['primary'], self.colors['success'], self.colors['info'],
                     self.colors['warning'], self.colors['danger'], self.colors['secondary'],
                     '#6610f2', '#fd7e14'
                 ]
                 colors = base_colors[:len(regions)]
-            
-            # Создаем улучшенные метки для легенды с количеством и процентами
+
             total_count = sum(counts)
             custom_labels = []
             for i, region in enumerate(regions):
@@ -153,16 +124,16 @@ class Visualizer:
             fig.add_trace(go.Pie(
                 labels=custom_labels,
                 values=counts,
-                textinfo='none',  # Убираем текст с самого графика
+                textinfo='none',
                 marker=dict(colors=colors),
-                hole=0.4  # Создаем donut chart для современного вида
+                hole=0.4
             ))
             
             fig.update_layout(
                 title='Распределение вакансий по регионам',
-                height=450,  # Увеличиваем высоту для размещения легенды
+                height=450,
                 legend=dict(
-                    orientation="v",  # Вертикальная ориентация легенды
+                    orientation="v",
                     yanchor="middle",
                     y=0.5,
                     xanchor="right",
@@ -172,24 +143,16 @@ class Visualizer:
             )
             
             result['regions_chart'] = pio.to_html(fig, full_html=False, config=self.config)
-        
-        # Интерактивная карта с координатами вакансий (если есть координаты)
+
         if 'coordinates' in data and data['coordinates']:
-            # Для карты используется Leaflet.js через JavaScript
-            # Здесь только подготовка данных для шаблона
-            
-            # Используем ensure_ascii=False для корректного отображения Unicode
-            # Это решит проблему с экранированием кириллических символов в JSON
             result['map_data'] = json.dumps(data['coordinates'], ensure_ascii=False)
         
         return result
     
     def _create_salary_block(self, data, filters):
-        """Создание блока с анализом зарплат"""
         result = {}
         currency = data.get('display_currency', 'BYN')
-        
-        # Гистограмма по зарплатам
+
         if 'salary_histogram' in data:
             fig = go.Figure()
             
@@ -213,20 +176,15 @@ class Visualizer:
             )
             
             result['salary_histogram'] = pio.to_html(fig, full_html=False, config=self.config)
-        
-        # Основные статистики по зарплатам
+
         if 'salary_stats' in data:
             stats = data['salary_stats']
             
             fig = go.Figure()
             
-            # Находим максимальную зарплату среди всех вакансий, которая не превышает 20000
-            # (если в данных нет зарплат до 20000, то используем минимальную из имеющихся)
             if 'filtered_max_salary' in data:
-                # Если есть специально подготовленная отфильтрованная максимальная зарплата
                 max_display_salary = data['filtered_max_salary']
             else:
-                # Иначе вычисляем на лету максимальную зарплату до 20000
                 max_display_salary = stats.get('max', 0)
                 if max_display_salary > 20000:
                     max_display_salary = 20000
@@ -235,7 +193,7 @@ class Visualizer:
                 stats.get('min', 0),
                 stats.get('median', 0),
                 stats.get('mean', 0),
-                max_display_salary  # Используем найденное максимальное значение
+                max_display_salary
             ]
             
             labels = ['Минимальная', 'Медиана', 'Средняя', 'Максимальная']
@@ -260,15 +218,12 @@ class Visualizer:
             )
             
             result['salary_stats_chart'] = pio.to_html(fig, full_html=False, config=self.config)
-        
-        # Boxplot зарплат по регионам
+
         if 'salary_by_region' in data and len(data['salary_by_region']) >= 2:
             region_data = pd.DataFrame(data['salary_by_region'])
-            
-            # Сортируем регионы по медианной зарплате для более наглядного отображения
+
             region_data = region_data.sort_values(by='median', ascending=False)
-            
-            # График 1: Медианная зарплата по регионам
+
             fig_median = go.Figure()
             
             fig_median.add_trace(go.Bar(
@@ -285,11 +240,9 @@ class Visualizer:
                 yaxis_title=f'Медианная зарплата ({currency})',
                 height=450
             )
-            
-            # Добавляем информацию в результат
+
             result['salary_by_region_chart_median'] = pio.to_html(fig_median, full_html=False, config=self.config)
-            
-            # График 2: Средняя зарплата по регионам
+
             fig_mean = go.Figure()
             
             fig_mean.add_trace(go.Bar(
@@ -306,11 +259,9 @@ class Visualizer:
                 yaxis_title=f'Средняя зарплата ({currency})',
                 height=450
             )
-            
-            # Добавляем информацию в результат
+
             result['salary_by_region_chart_mean'] = pio.to_html(fig_mean, full_html=False, config=self.config)
-            
-            # График 3: Количество вакансий по регионам
+
             fig_count = go.Figure()
             
             fig_count.add_trace(go.Bar(
@@ -327,18 +278,13 @@ class Visualizer:
                 yaxis_title='Количество вакансий',
                 height=450
             )
-            
-            # Добавляем информацию в результат
+
             result['salary_by_region_chart_count'] = pio.to_html(fig_count, full_html=False, config=self.config)
-        
-        # Scatter plot: зарплата vs опыт
+
         if 'salary_by_experience' in data and len(data['salary_by_experience']) >= 2:
             exp_data = pd.DataFrame(data['salary_by_experience'])
-            # Создаем два отдельных графика - для медианы и средней зарплаты
-            # Разделим на два графика: медиана и средняя зарплата
             fig_median = go.Figure()
             fig_mean = go.Figure()
-            # График медианной зарплаты
             fig_median.add_trace(go.Bar(
                 x=exp_data['experience'],
                 y=exp_data['median'],
@@ -353,7 +299,6 @@ class Visualizer:
                 yaxis_title=f'Зарплата ({currency})',
                 height=400
             )
-            # График средней зарплаты
             fig_mean.add_trace(go.Bar(
                 x=exp_data['experience'],
                 y=exp_data['mean'],
@@ -368,24 +313,19 @@ class Visualizer:
                 yaxis_title=f'Зарплата ({currency})',
                 height=400
             )
-            # Сохраняем оба графика по отдельности
             result['salary_by_experience_median'] = pio.to_html(fig_median, full_html=False, config=self.config)
             result['salary_by_experience_mean'] = pio.to_html(fig_mean, full_html=False, config=self.config)
         
         return result
     
     def _create_experience_schedule_block(self, data, filters):
-        """Создание блока с анализом опыта и графика работы"""
         result = {}
-        
-        # Pie chart и Bar chart по опыту работы
+
         if 'experience' in data and len(data['experience']) >= 3:
-            # Сортируем данные по опыту
             exp_items = sorted(data['experience'].items(), key=lambda x: self._sort_experience(x[0]))
             exp_labels = [item[0] for item in exp_items]
             exp_counts = [item[1] for item in exp_items]
-            
-            # 1. Круговая диаграмма (pie chart)
+
             fig = go.Figure()
             fig.add_trace(go.Pie(
                 labels=exp_labels,
@@ -399,8 +339,7 @@ class Visualizer:
                 height=400
             )
             result['experience_chart'] = pio.to_html(fig, full_html=False, config=self.config)
-            
-            # 2. Горизонтальная гистограмма (bar chart)
+
             fig_bar = go.Figure()
             fig_bar.add_trace(go.Bar(
                 y=exp_labels,
@@ -419,7 +358,6 @@ class Visualizer:
             
             print(f"[DEBUG] Созданы диаграммы по опыту: pie={len(result['experience_chart'])}, bar={len(result['experience_bar_chart'])}")
         
-        # Bar/pie по графику работы
         if 'schedule' in data and len(data['schedule']) >= 2:
             fig = go.Figure()
             
@@ -439,8 +377,7 @@ class Visualizer:
             )
             
             result['schedule_chart'] = pio.to_html(fig, full_html=False, config=self.config)
-        
-        # Bar/pie по типу занятости
+
         if 'employment' in data and len(data['employment']) >= 2:
             fig = go.Figure()
             
@@ -467,10 +404,8 @@ class Visualizer:
         return result
     
     def _create_skills_block(self, data, filters):
-        """Создание блока с анализом ключевых навыков"""
         result = {}
-        
-        # WordCloud (если >10 уникальных ключевых навыков)
+
         if 'all_skills' in data and len(data['all_skills']) > 10:
             try:
                 wordcloud = WordCloud(
@@ -487,15 +422,13 @@ class Visualizer:
                 result['skills_wordcloud'] = base64.b64encode(img.getvalue()).decode('utf-8')
             except Exception as e:
                 print(f"Ошибка при создании облака слов: {e}")
-        
-        # Barplot топ-20 навыков
+
         if 'top_skills' in data and len(data['top_skills']) >= 5:
             fig = go.Figure()
             
-            skills = list(data['top_skills'].keys())[:20]  # ограничиваем до 20
+            skills = list(data['top_skills'].keys())[:20]
             counts = list(data['top_skills'].values())[:20]
-            
-            # Сортируем по убыванию
+
             skills_sorted = [x for _, x in sorted(zip(counts, skills), reverse=True)]
             counts_sorted = sorted(counts, reverse=True)
             
@@ -519,17 +452,14 @@ class Visualizer:
         return result
     
     def _create_employers_block(self, data, filters):
-        """Создание блока с анализом работодателей"""
         result = {}
-        
-        # Топ-10 работодателей по количеству вакансий
+
         if 'top_employers' in data:
             fig = go.Figure()
             
             employers = list(data['top_employers'].keys())
             counts = list(data['top_employers'].values())
-            
-            # Сортируем по убыванию
+
             employers_sorted = [x for _, x in sorted(zip(counts, employers), reverse=True)]
             counts_sorted = sorted(counts, reverse=True)
             
@@ -549,10 +479,8 @@ class Visualizer:
             )
             
             result['top_employers_chart'] = pio.to_html(fig, full_html=False, config=self.config)
-        
-        # Средняя зарплата по работодателям
+
         if 'top_employers_detailed' in data:
-            # Фильтруем только работодателей с данными о зарплате
             employers_with_salary = [
                 e for e in data['top_employers_detailed'] 
                 if 'avg_salary' in e
@@ -563,15 +491,13 @@ class Visualizer:
                 
                 employers = [e['name'] for e in employers_with_salary]
                 salaries = [e['avg_salary'] for e in employers_with_salary]
-                
-                # Сортируем по зарплате без ограничения количества
+
                 sorted_data = sorted(zip(salaries, employers), reverse=True)
                 salaries_sorted = [s for s, _ in sorted_data]
                 employers_sorted = [e for _, e in sorted_data]
                 
                 currency = data.get('display_currency', 'BYN')
-                
-                # Добавляем горизонтальную гистограмму для лучшей читаемости
+
                 fig.add_trace(go.Bar(
                     y=employers_sorted,
                     x=salaries_sorted,
@@ -580,9 +506,7 @@ class Visualizer:
                     textposition='auto',
                     orientation='h'
                 ))
-                
-                # Настраиваем высоту графика в зависимости от количества работодателей
-                # для обеспечения достаточного пространства
+
                 height = max(500, 100 + len(employers_with_salary) * 30) 
                 
                 fig.update_layout(
@@ -598,15 +522,13 @@ class Visualizer:
     def _create_tech_grid_block(self, data, filters):
         """Создание блока с визуальным интерактивом по технологиям"""
         result = {}
-        
-        # Treemap технологий (heatmap / treemap)
+
         if 'top_skills' in data and len(data['top_skills']) >= 10:
             fig = go.Figure()
             
-            skills = list(data['top_skills'].keys())[:30]  # ограничиваем до 30
+            skills = list(data['top_skills'].keys())[:30]
             counts = list(data['top_skills'].values())[:30]
-            
-            # Используем только имя для отображения и частоту как значение
+
             fig.add_trace(go.Treemap(
                 labels=skills,
                 parents=[""] * len(skills),
@@ -628,10 +550,8 @@ class Visualizer:
         return result
     
     def _create_professions_block(self, data, filters):
-        """Создание блока с рейтингом профессий/направлений"""
         result = {}
-        
-        # Список популярных IT-профессий для поиска в названиях вакансий
+
         professions = [
             {"name": "Backend разработчик", "keywords": ["backend", "бэкенд", "back-end", "backend developer"]},
             {"name": "Frontend разработчик", "keywords": ["frontend", "фронтенд", "front-end", "frontend developer"]},
@@ -654,42 +574,32 @@ class Visualizer:
             {"name": "PHP разработчик", "keywords": ["php developer", "php разработчик"]},
             {"name": "Golang разработчик", "keywords": ["golang developer", "golang разработчик", "go developer", "go разработчик"]}
         ]
-        
-        # Если в data есть данные о вакансиях
+
         if 'vacancy_names' in data and len(data['vacancy_names']) > 0:
-            # Используем данные из списка вакансий
             vacancy_names = data['vacancy_names']
         else:
-            # Если нет специального списка имен, создаем новый список
-            # с пустыми результатами для демонстрации
             vacancy_names = []
-        
-        # Счетчик для каждой профессии
+
         profession_counts = Counter()
-        
-        # Проходим по всем названиям вакансий
+
         for vacancy_name in vacancy_names:
             vacancy_name_lower = vacancy_name.lower()
             for profession in professions:
                 for keyword in profession["keywords"]:
                     if keyword.lower() in vacancy_name_lower:
                         profession_counts[profession["name"]] += 1
-                        break  # Если нашли совпадение по ключевому слову, переходим к следующей вакансии
-        
-        # Проверяем, есть ли результаты
+                        break  
+
         if profession_counts:
-            # Создаем горизонтальную гистограмму для профессий
             fig = go.Figure()
-            
-            # Сортируем по убыванию количества
+
             profession_names = []
             profession_values = []
             
-            for name, count in profession_counts.most_common(15):  # Берем top-15 профессий
+            for name, count in profession_counts.most_common(15):
                 profession_names.append(name)
                 profession_values.append(count)
             
-            # Добавляем горизонтальный bar chart
             fig.add_trace(go.Bar(
                 y=profession_names,
                 x=profession_values,
@@ -707,15 +617,13 @@ class Visualizer:
             
             result['professions_chart'] = pio.to_html(fig, full_html=False, config=self.config)
             
-            # Создаем круговую диаграмму для топ-7 профессий
+            # Круговая диаграмма для топ-7 профессий
             if len(profession_names) >= 5:
                 fig_pie = go.Figure()
                 
-                # Берем топ-7 профессий
                 top_names = profession_names[:7]
                 top_values = profession_values[:7]
                 
-                # Если есть еще профессии, добавляем их в категорию "Другие"
                 if len(profession_names) > 7:
                     other_sum = sum(profession_values[7:])
                     if other_sum > 0:
@@ -739,7 +647,6 @@ class Visualizer:
         return result
     
     def _sort_experience(self, exp_name):
-        """Сортировка опыта работы в правильном порядке"""
         exp_order = {
             'Нет опыта': 0,
             'От 1 года до 3 лет': 1,
