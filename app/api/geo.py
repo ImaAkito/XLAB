@@ -7,7 +7,7 @@ import requests
 _area_tree = None
 _area_name_by_id = {}
 _area_level1 = set()
-YANDEX_API_KEY = "329c30aa-ac19-49f0-87ba-1281c6c28fc9"
+YANDEX_API_KEY = "key" #329c30aa-ac19-49f0-87ba-1281c6c28fc9
 _geocode_cache = {}
 
 def load_area_structure():
